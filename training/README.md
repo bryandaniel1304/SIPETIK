@@ -40,31 +40,39 @@ training, dan `animalLabel()` di
   `(cloud)`, beda dari box lokal (hijau), supaya kelihatan sumbernya.
 - Matikan dengan `--no-remote` kalau tidak ada internet atau mau hemat
   kuota API gratis Roboflow.
-- Model-model yang dipakai (lihat `REMOTE_MODEL_IDS` &
-  `WALANG_SANGIT_WORKFLOW` di `main.py`):
+- Model/workflow yang dipakai (lihat `REMOTE_MODEL_IDS` &
+  `ZERO_SHOT_WORKFLOW` di `main.py`):
   - `paddy-rice-insect-pest-dataset/3` (multi-hama padi, termasuk wereng)
   - `golden-apple-snail/2` (keong mas)
-  - Workflow segmentasi open-vocabulary di workspace kamu sendiri, dipaksa
-    cari kelas "walang sangit" (walang sangit)
+  - 1 workflow segmentasi open-vocabulary di workspace kamu sendiri, dicari
+    2 kelas sekaligus lewat parameter `classes`: **walang sangit** dan
+    **ulat grayak**. Workflow ini tidak perlu dibuat baru per hama — cukup
+    tambahkan nama hama ke `classes_param`, jadi kalau nanti mau nambah
+    kelas lain (belalang, hispa padi, penggerek batang — sudah kelihatan
+    ada di kandidat dataset padi Indonesia yang saya temukan) tinggal
+    ditambahkan ke situ (plus update `REMOTE_KEYWORD_MAP` &
+    `CameraController::animalLabel()` biar konsisten).
   - ~~`detection-of-fall-armyworm-infestation-with-deep-learning/1`~~ —
-    **dimatikan**, lihat poin di bawah. Berarti **ulat grayak untuk
-    sementara tidak terdeteksi** sampai ada model/data pengganti.
+    **dimatikan permanen**, diganti workflow di atas untuk ulat grayak.
 
 **Keterbatasan yang sudah saya uji langsung (bukan asumsi):**
 - Nama kelas yang dikembalikan tiap model **tidak seragam** (mis. model
   fall-armyworm mengembalikan `"FAW_Day1"`, `"FAW_Day3"`, dst — bukan
   `"armyworm"`), jadi `main.py` memetakan berdasar **kata kunci**
   (`REMOTE_KEYWORD_MAP`), bukan exact-match.
-- Model fall-armyworm (buat ulat grayak) **tidak reliable untuk kamera
-  webcam biasa** — dicoba dengan gambar noise acak sempat false-positive
-  (confidence ~0.65), lalu dikonfirmasi lagi di kamera sungguhan: model ini
-  salah mengenali **wajah orang** sebagai "ulat grayak" dengan confidence
-  0.6–0.75. Kelihatannya model itu dilatih khusus foto close-up daun yang
-  sudah terserang, bukan untuk membedakan "ada hama" vs "bukan hama" di
-  scene umum. Karena ini bisa memicu buzzer palsu terus-menerus, model ini
-  **sudah dimatikan by default** (dikomentari di `REMOTE_MODEL_IDS`
-  `main.py`). Kalau mau dicoba lagi nanti (mis. sudah ketemu model yang
-  lebih baik atau mau tes sendiri), aktifkan lagi manual di sana.
+- Model fall-armyworm (dipakai sebelumnya buat ulat grayak) **tidak
+  reliable untuk kamera webcam biasa** — dicoba dengan gambar noise acak
+  sempat false-positive (confidence ~0.65), lalu dikonfirmasi lagi di
+  kamera sungguhan: model ini salah mengenali **wajah orang** sebagai
+  "ulat grayak" dengan confidence 0.6–0.75. Kelihatannya model itu dilatih
+  khusus foto close-up daun yang sudah terserang, bukan untuk membedakan
+  "ada hama" vs "bukan hama" di scene umum. Sudah diganti permanen dengan
+  workflow open-vocabulary di atas — baru dites dengan gambar noise acak
+  (bersih, tidak false-positive), **belum sempat dites langsung ke kamera
+  dengan wajah orang** seperti kasus yang mengungkap masalah di model
+  sebelumnya. Coba dulu di kamera kamu sendiri (arahkan ke wajah, ke
+  ruangan kosong, dll — bukan cuma ke sawah) sebelum 100% mengandalkannya
+  untuk trigger buzzer otomatis.
 - Deteksi cloud butuh internet & tunduk pada limit kuota gratis akun
   Roboflow kamu; kalau kena limit/timeout, log `[WARN]` muncul di terminal
   tapi deteksi lokal (tikus) tetap jalan normal.

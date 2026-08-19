@@ -91,12 +91,17 @@ REMOTE_MODEL_IDS = [
     # model/data ulat grayak yang lebih baik (lihat training/README.md).
 ]
 
-# Walang sangit dipanggil lewat Workflow (segmentasi open-vocabulary),
-# bukan model project biasa — lihat training/README.md.
-WALANG_SANGIT_WORKFLOW = {
+# Walang sangit & ulat grayak dipanggil lewat 1 Workflow yang sama
+# (segmentasi open-vocabulary — daftar kelas dikirim saat runtime lewat
+# parameter "classes", jadi 1 workflow bisa dipakai untuk banyak hama
+# sekaligus, tidak perlu bikin workflow baru per hama). Dipakai untuk ulat
+# grayak karena model project fall-armyworm sebelumnya tidak reliable
+# (lihat catatan REMOTE_MODEL_IDS di atas & training/README.md) — workflow
+# ini sudah dites bersih (tidak false-positive di gambar noise).
+ZERO_SHOT_WORKFLOW = {
     "workspace_name": "bryans-workspace-cfpnz",
     "workflow_id":    "general-segmentation-api",
-    "classes_param":  "walang sangit, Walang sangit",
+    "classes_param":  "walang sangit, Walang sangit, ulat grayak, Ulat grayak",
 }
 
 # Nama kelas yang dikembalikan tiap model Roboflow di atas tidak selalu
@@ -246,7 +251,7 @@ def query_remote_pests(client) -> list:
             print(f"  [WARN] Roboflow model {model_id} error: {exc}")
 
     try:
-        wf = WALANG_SANGIT_WORKFLOW
+        wf = ZERO_SHOT_WORKFLOW
         result = client.run_workflow(
             workspace_name=wf["workspace_name"],
             workflow_id=wf["workflow_id"],
@@ -255,9 +260,12 @@ def query_remote_pests(client) -> list:
             use_cache=True,
         )
         preds = (result[0].get("predictions") or {}).get("predictions", []) if result else []
-        detections += parse_remote_predictions(preds, force_slug="walang_sangit")
+        # Tanpa force_slug — hasil bisa "walang sangit" ATAU "ulat grayak"
+        # (keduanya diminta lewat classes_param), classify_remote_label()
+        # yang menentukan slug-nya dari nama kelas yang benar-benar dibalikin.
+        detections += parse_remote_predictions(preds)
     except Exception as exc:
-        print(f"  [WARN] Roboflow workflow walang-sangit error: {exc}")
+        print(f"  [WARN] Roboflow workflow zero-shot error: {exc}")
 
     return detections
 
