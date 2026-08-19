@@ -1,0 +1,18 @@
+# SIPETIK — dataset config untuk training model deteksi hama sawah multi-kelas.
+# Dibuat/diisi otomatis oleh download_datasets.py, jangan diedit manual kecuali
+# kamu tahu persis apa yang diubah (urutan `names` harus konsisten dengan
+# class id di file label .txt, dan harus sama dengan mapping di
+# app/Http/Controllers/Api/CameraController.php -> animalLabel()).
+
+path: dataset      # relatif terhadap folder training/
+train: train/images
+val: valid/images
+test: test/images  # opsional, boleh tidak ada
+
+nc: 5
+names:
+  0: rat              # tikus
+  1: walang_sangit     # walang sangit / rice bug
+  2: wereng_coklat      # wereng batang coklat / brown planthopper
+  3: ulat_grayak        # ulat grayak / armyworm
+  4: keong_mas          # keong mas / golden apple snail

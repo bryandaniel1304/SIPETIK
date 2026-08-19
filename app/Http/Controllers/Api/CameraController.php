@@ -49,10 +49,12 @@ class CameraController extends Controller
 
         $buzzerTriggered = false;
         $pirActive       = false;
+        $envRisky        = false;
 
         if ($detected) {
             $latest    = SensorData::latest('created_at')->first();
             $pirActive = (bool) ($latest?->metadata['motion'] ?? false);
+            $envRisky  = $latest ? $this->hasRiskyEnvironment($latest) : false;
 
             // Kamera mendeteksi binatang → buzzer 3 detik (PIR tidak wajib)
             // Hanya diblokir saat override aktif
@@ -141,6 +143,19 @@ class CameraController extends Controller
     {
         return match ($class) {
             null, '', 'none' => '-',
+
+            // Hama sawah — kelas custom model SIPETIK (best.pt)
+            'rat', 'tikus'                    => 'Tikus',
+            'walang_sangit', 'walang-sangit'  => 'Walang Sangit',
+            'wereng_coklat', 'wereng-coklat',
+            'brown_planthopper'               => 'Wereng Batang Coklat',
+            'ulat_grayak', 'ulat-grayak',
+            'armyworm'                         => 'Ulat Grayak',
+            'keong_mas', 'keong-mas',
+            'golden_apple_snail'               => 'Keong Mas',
+
+            // Fallback — kelas bawaan COCO (dipakai bila best.pt tidak
+            // ditemukan dan script jatuh balik ke yolov8n.pt)
             'bird'     => 'Burung',
             'cat'      => 'Kucing',
             'dog'      => 'Anjing',
@@ -151,7 +166,8 @@ class CameraController extends Controller
             'bear'     => 'Beruang',
             'zebra'    => 'Zebra',
             'giraffe'  => 'Jerapah',
-            default    => ucfirst($class),
+
+            default    => ucfirst(str_replace(['_', '-'], ' ', $class)),
         };
     }
 }

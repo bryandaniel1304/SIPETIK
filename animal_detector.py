@@ -22,6 +22,8 @@ import time
 import argparse
 from datetime import datetime
 
+import windows_git_fix  # noqa: F401  (must run before importing ultralytics — see file for why)
+
 try:
     import torch
     CUDA_AVAILABLE = torch.cuda.is_available()

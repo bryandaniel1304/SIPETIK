@@ -18,6 +18,8 @@ import time
 import argparse
 from datetime import datetime
 
+import windows_git_fix  # noqa: F401  (must run before importing ultralytics — see file for why)
+
 try:
     import cv2
 except ImportError:

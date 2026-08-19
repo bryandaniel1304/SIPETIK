@@ -183,5 +183,8 @@ tail -f storage/logs/laravel.log
 | `config/esp32.php` | Kalibrasi soil raw, IP sensor |
 | `storage/app/buzzer_command.txt` | Antrian perintah buzzer ke ESP32 |
 | `esp32_sipetik_dashboard.ino` | Sketch Arduino ESP32 |
-| `animal_detector.py` | Script deteksi binatang Python |
-| `camera_requirements.txt` | Dependensi Python |
+| `main.py` | Script deteksi hama sawah (YOLOv8 + `best.pt`) |
+| `animal_detector.py` | Script deteksi binatang umum (fallback COCO / Roboflow tikus) |
+| `camera_requirements.txt` | Dependensi Python untuk deteksi |
+| `windows_git_fix.py` | Workaround bug `ultralytics` di komputer ini (folder `D:\WpSystem` rusak) — wajib di-import sebelum `ultralytics` |
+| `training/` | Pipeline untuk melatih ulang `best.pt` supaya deteksi lebih banyak hama — lihat [`training/README.md`](training/README.md) |
