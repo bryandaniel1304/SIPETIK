@@ -24,6 +24,8 @@ Homestead.yaml
 Thumbs.db
 __pycache__/
 *.pyc
+/venv
+/.venv
 
 # Training pipeline (training/README.md) — dataset & hasil training bisa
 # besar/berisi ribuan gambar, jangan ikut di-commit ke GitHub.
