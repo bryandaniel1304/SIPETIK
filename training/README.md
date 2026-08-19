@@ -43,25 +43,28 @@ training, dan `animalLabel()` di
 - Model-model yang dipakai (lihat `REMOTE_MODEL_IDS` &
   `WALANG_SANGIT_WORKFLOW` di `main.py`):
   - `paddy-rice-insect-pest-dataset/3` (multi-hama padi, termasuk wereng)
-  - `detection-of-fall-armyworm-infestation-with-deep-learning/1` (ulat grayak)
   - `golden-apple-snail/2` (keong mas)
   - Workflow segmentasi open-vocabulary di workspace kamu sendiri, dipaksa
     cari kelas "walang sangit" (walang sangit)
+  - ~~`detection-of-fall-armyworm-infestation-with-deep-learning/1`~~ —
+    **dimatikan**, lihat poin di bawah. Berarti **ulat grayak untuk
+    sementara tidak terdeteksi** sampai ada model/data pengganti.
 
 **Keterbatasan yang sudah saya uji langsung (bukan asumsi):**
 - Nama kelas yang dikembalikan tiap model **tidak seragam** (mis. model
   fall-armyworm mengembalikan `"FAW_Day1"`, `"FAW_Day3"`, dst — bukan
   `"armyworm"`), jadi `main.py` memetakan berdasar **kata kunci**
   (`REMOTE_KEYWORD_MAP`), bukan exact-match.
-- Model fall-armyworm cenderung **agak sensitif** — pada tes dengan gambar
-  acak (noise, bukan foto asli), model ini beberapa kali mengembalikan
-  deteksi "ulat grayak" dengan confidence 0.5–0.65. Default
-  `REMOTE_MIN_CONFIDENCE` sudah dinaikkan ke 0.60 untuk mengurangi ini,
-  tapi **tes dulu dengan kondisi kamera & pencahayaan sawah kamu sendiri**
-  sebelum benar-benar mengandalkannya untuk trigger buzzer otomatis — kalau
-  masih terlalu sering false-positive, naikkan `REMOTE_MIN_CONFIDENCE` di
-  `main.py`, atau hapus model itu dari `REMOTE_MODEL_IDS` sampai ada
-  model/data yang lebih baik.
+- Model fall-armyworm (buat ulat grayak) **tidak reliable untuk kamera
+  webcam biasa** — dicoba dengan gambar noise acak sempat false-positive
+  (confidence ~0.65), lalu dikonfirmasi lagi di kamera sungguhan: model ini
+  salah mengenali **wajah orang** sebagai "ulat grayak" dengan confidence
+  0.6–0.75. Kelihatannya model itu dilatih khusus foto close-up daun yang
+  sudah terserang, bukan untuk membedakan "ada hama" vs "bukan hama" di
+  scene umum. Karena ini bisa memicu buzzer palsu terus-menerus, model ini
+  **sudah dimatikan by default** (dikomentari di `REMOTE_MODEL_IDS`
+  `main.py`). Kalau mau dicoba lagi nanti (mis. sudah ketemu model yang
+  lebih baik atau mau tes sendiri), aktifkan lagi manual di sana.
 - Deteksi cloud butuh internet & tunduk pada limit kuota gratis akun
   Roboflow kamu; kalau kena limit/timeout, log `[WARN]` muncul di terminal
   tapi deteksi lokal (tikus) tetap jalan normal.

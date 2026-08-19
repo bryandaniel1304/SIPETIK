@@ -77,12 +77,18 @@ CLEAR_FRAMES       = 5    # frame tanpa deteksi sebelum kirim "clear"
 # sama, model terkait bisa dihapus dari daftar ini untuk hemat kuota API.
 ROBOFLOW_API_URL       = "https://serverless.roboflow.com"
 REMOTE_CHECK_INTERVAL  = 3.0   # detik antar panggilan API (jaga latency & kuota)
-REMOTE_MIN_CONFIDENCE  = 0.60   # dites: model fall-armyworm agak "sensitif", <0.6 lumayan sering false-positive
+REMOTE_MIN_CONFIDENCE  = 0.60
 
 REMOTE_MODEL_IDS = [
     "paddy-rice-insect-pest-dataset/3",
-    "detection-of-fall-armyworm-infestation-with-deep-learning/1",
     "golden-apple-snail/2",
+    # "detection-of-fall-armyworm-infestation-with-deep-learning/1" —
+    # DIMATIKAN. Dites langsung: model ini salah kenali wajah orang di depan
+    # kamera sebagai "ulat grayak" (confidence 0.6–0.75), bukan cuma di
+    # gambar noise. Kelihatannya model ini dilatih untuk foto close-up daun
+    # yang sudah terserang, bukan untuk membedakan "ada hama" vs "bukan
+    # hama" di scene webcam biasa. Jangan aktifkan lagi sampai ketemu
+    # model/data ulat grayak yang lebih baik (lihat training/README.md).
 ]
 
 # Walang sangit dipanggil lewat Workflow (segmentasi open-vocabulary),
