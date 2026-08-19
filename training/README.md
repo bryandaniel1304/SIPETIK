@@ -1,8 +1,20 @@
 # SIPETIK — Ekspansi Deteksi Hama (5 kelas)
 
 Model `best.pt` yang sekarang dipakai `main.py` hanya dilatih untuk **1 kelas: tikus**
-(`nc: 1, names: {0: 'rat'}` — dicek langsung dari isi file model). Folder ini berisi
-pipeline untuk melatih ulang model YOLOv8 supaya bisa mendeteksi **5 hama sawah**:
+(`nc: 1, names: {0: 'rat'}` — dicek langsung dari isi file model).
+
+> **Update:** cara tercepat untuk menambah cakupan deteksi ternyata bukan
+> training lokal, tapi memanfaatkan model-model yang **sudah dilatih orang
+> lain di Roboflow** lewat API hosted mereka. `main.py` sekarang punya mode
+> hybrid: tikus tetap dideteksi lokal (cepat, offline) via `best.pt`, dan 4
+> hama lain dipanggil lewat API Roboflow di background thread (aktif
+> otomatis kalau `ROBOFLOW_API_KEY` diisi di `.env`). Ini **sudah aktif**,
+> tidak perlu training apa pun. Sisa dokumen di bawah ini tetap relevan
+> kalau suatu saat kamu mau melatih model lokal sendiri (mis. supaya bisa
+> jalan tanpa internet, atau akurasi hosted model kurang bagus untuk kamera
+> kamu).
+
+Kelas target (dipakai baik oleh mode lokal maupun mode cloud):
 
 | # | Kelas (slug)     | Nama Indonesia          |
 |---|------------------|--------------------------|
@@ -16,6 +28,47 @@ Slug ini **harus** konsisten di tiga tempat: `training/data.yaml`, model hasil
 training, dan `animalLabel()` di
 [app/Http/Controllers/Api/CameraController.php](../app/Http/Controllers/Api/CameraController.php)
 (sudah disiapkan / sudah di-update).
+
+---
+
+## Mode cloud (aktif sekarang) — cara pakai & keterbatasannya
+
+- Isi `ROBOFLOW_API_KEY` di `.env` (sudah ada kalau kamu ikuti setup awal).
+- Jalankan seperti biasa: `python main.py`. Kalau key terdeteksi, terminal
+  akan menampilkan `Cloud: AKTIF`.
+- Box hasil deteksi cloud digambar warna **oranye** dengan label
+  `(cloud)`, beda dari box lokal (hijau), supaya kelihatan sumbernya.
+- Matikan dengan `--no-remote` kalau tidak ada internet atau mau hemat
+  kuota API gratis Roboflow.
+- Model-model yang dipakai (lihat `REMOTE_MODEL_IDS` &
+  `WALANG_SANGIT_WORKFLOW` di `main.py`):
+  - `paddy-rice-insect-pest-dataset/3` (multi-hama padi, termasuk wereng)
+  - `detection-of-fall-armyworm-infestation-with-deep-learning/1` (ulat grayak)
+  - `golden-apple-snail/2` (keong mas)
+  - Workflow segmentasi open-vocabulary di workspace kamu sendiri, dipaksa
+    cari kelas "walang sangit" (walang sangit)
+
+**Keterbatasan yang sudah saya uji langsung (bukan asumsi):**
+- Nama kelas yang dikembalikan tiap model **tidak seragam** (mis. model
+  fall-armyworm mengembalikan `"FAW_Day1"`, `"FAW_Day3"`, dst — bukan
+  `"armyworm"`), jadi `main.py` memetakan berdasar **kata kunci**
+  (`REMOTE_KEYWORD_MAP`), bukan exact-match.
+- Model fall-armyworm cenderung **agak sensitif** — pada tes dengan gambar
+  acak (noise, bukan foto asli), model ini beberapa kali mengembalikan
+  deteksi "ulat grayak" dengan confidence 0.5–0.65. Default
+  `REMOTE_MIN_CONFIDENCE` sudah dinaikkan ke 0.60 untuk mengurangi ini,
+  tapi **tes dulu dengan kondisi kamera & pencahayaan sawah kamu sendiri**
+  sebelum benar-benar mengandalkannya untuk trigger buzzer otomatis — kalau
+  masih terlalu sering false-positive, naikkan `REMOTE_MIN_CONFIDENCE` di
+  `main.py`, atau hapus model itu dari `REMOTE_MODEL_IDS` sampai ada
+  model/data yang lebih baik.
+- Deteksi cloud butuh internet & tunduk pada limit kuota gratis akun
+  Roboflow kamu; kalau kena limit/timeout, log `[WARN]` muncul di terminal
+  tapi deteksi lokal (tikus) tetap jalan normal.
+- **API key kamu jangan pernah ditaruh langsung di source code** yang
+  masuk git — selalu lewat `.env` (sudah di-`.gitignore`). Kalau khawatir
+  key sempat bocor, tinggal generate ulang di roboflow.com → Settings →
+  API Keys, lalu update `.env`.
 
 ---
 
