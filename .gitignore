@@ -32,3 +32,4 @@ __pycache__/
 /training/dataset
 /training/_downloads
 /training/runs
+/training/_data.resolved.yaml

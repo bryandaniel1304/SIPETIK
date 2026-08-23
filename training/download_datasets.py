@@ -1,41 +1,25 @@
 #!/usr/bin/env python3
 """
-SIPETIK — Unduh & gabungkan dataset publik jadi satu dataset YOLO multi-kelas.
-================================================================================
-PENTING — baca dulu sebelum menjalankan:
+SIPETIK — Unduh & siapkan dataset lokal untuk wereng batang coklat + walang
+sangit (2 kelas — lihat training/data.yaml untuk kenapa cuma 2, bukan 5).
 
-Daftar di DATASETS di bawah ini adalah *kandidat* dataset publik di Roboflow
-Universe yang saya temukan lewat pencarian (halaman proyeknya sendiri tidak
-bisa saya buka langsung untuk verifikasi — Roboflow memblokir scraping).
-Sebelum menjalankan script ini kamu WAJIB:
+Sumbernya SUDAH DIVERIFIKASI langsung lewat Roboflow SDK (bukan tebakan):
 
-  1. Buka tiap URL di komentar bawah, login/daftar gratis di roboflow.com.
-  2. Cek isi datasetnya benar (jumlah gambar, kualitas, kelas yang tersedia).
-  3. Klik tombol "Download this Dataset" -> format "YOLOv8" -> pilih
-     "show download code" (bukan "download zip"). Roboflow akan menampilkan
-     kode Python persis seperti:
+    csu-bpvmi/paddy-rice-insect-pest-dataset, version 3
+    -> 3.477 gambar (3045 train / 289 valid / 143 test)
+    -> kelas "brown plant hopper"  -> wereng_coklat
+    -> kelas "rice bug"            -> walang_sangit
+       ("rice bug" = nama Inggris untuk walang sangit / Leptocorisa oratorius)
 
-         from roboflow import Roboflow
-         rf = Roboflow(api_key="XXXXXXXXXXXX")
-         project = rf.workspace("ramadhan").project("walang-sangit")
-         version = project.version(1)
-         dataset = version.download("yolov8")
+Kelas lain di dataset ini (rice grasshopper, black bug, stem borer, green
+leaf hopper, rice leaf roller) otomatis dibuang karena tidak ada di
+TARGET_CLASSES di bawah.
 
-     Salin nilai workspace / project / version / api_key ke DATASETS di bawah.
-  4. Cek nama-nama kelas asli dataset itu (muncul di halaman project, tab
-     "Classes"), lalu sesuaikan `class_map` supaya memetakan ke salah satu
-     dari 5 kelas target SIPETIK: rat, walang_sangit, wereng_coklat,
-     ulat_grayak, keong_mas. Kelas yang TIDAK ada di class_map akan dibuang
-     (box-nya dihapus, gambar tetap dipakai sebagai contoh "tidak ada hama"
-     kalau semua box-nya terbuang).
-
-Setelah DATASETS diisi & diverifikasi, jalankan:
-
-    pip install -r training/requirements.txt
-    python training/download_datasets.py
-
-Hasil akhirnya: folder training/dataset/{train,valid,test}/{images,labels}
-siap dipakai oleh training/train.py.
+Sebelum jalan:
+    1. Isi ROBOFLOW_API_KEY di .env (sudah ada kalau ikut setup sebelumnya)
+    2. pip install -r training/requirements.txt
+    3. python training/download_datasets.py
+    4. python training/train.py
 """
 
 import os
@@ -43,7 +27,16 @@ import shutil
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import windows_git_fix  # noqa: E402,F401  (roboflow imports ultralytics internally — see file for why)
+
 import yaml
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 try:
     from roboflow import Roboflow
@@ -56,80 +49,19 @@ TRAINING_DIR = Path(__file__).resolve().parent
 MERGED_DIR   = TRAINING_DIR / "dataset"
 TMP_DIR      = TRAINING_DIR / "_downloads"
 
-# Urutan kelas target SIPETIK — HARUS sama persis dengan training/data.yaml
-# dan dengan mapping label di app/Http/Controllers/Api/CameraController.php
-TARGET_CLASSES = ["rat", "walang_sangit", "wereng_coklat", "ulat_grayak", "keong_mas"]
+# Urutan kelas — HARUS sama persis dengan training/data.yaml
+TARGET_CLASSES = ["wereng_coklat", "walang_sangit"]
 
-# ============================================================================
-#  DATASETS — isi/ganti sesuai hasil verifikasi kamu di roboflow.com
-#  (lihat instruksi lengkap di training/README.md)
-# ============================================================================
 DATASETS = [
     {
-        # https://universe.roboflow.com/ramadhan/walang-sangit
-        # ~600 gambar, kelas tunggal "walang sangit" (belum diverifikasi manual).
-        "api_key":   "GANTI_API_KEY_KAMU",
-        "workspace": "ramadhan",
-        "project":   "walang-sangit",
-        "version":   1,
-        "class_map": {
-            # "nama_kelas_asli_di_dataset": "target_class_sipetik"
-            "walang sangit": "walang_sangit",
-            "walang-sangit": "walang_sangit",
-        },
-    },
-    {
-        # https://universe.roboflow.com/csu-bpvmi/paddy-rice-insect-pest-dataset
-        # Dataset multi-hama padi. Kelas yang relevan buat kita cuma sebagian
-        # (sisanya otomatis dibuang). CEK ULANG nama kelas persisnya di
-        # Roboflow sebelum jalan — nama di bawah ini tebakan dari hasil
-        # pencarian, kemungkinan besar perlu disesuaikan huruf besar/kecilnya.
-        "api_key":   "GANTI_API_KEY_KAMU",
         "workspace": "csu-bpvmi",
         "project":   "paddy-rice-insect-pest-dataset",
-        "version":   1,
+        "version":   3,
         "class_map": {
-            "Brown Planthopper":    "wereng_coklat",
-            "Rice Leaf Catterpillar": "ulat_grayak",  # aproksimasi, cek visualnya
-            # kelas lain (Rice Leaf Roller, Rice Weevil, dst) sengaja tidak
-            # dipetakan -> dibuang, karena bukan salah satu dari 5 target kita.
+            "brown plant hopper": "wereng_coklat",
+            "rice bug":           "walang_sangit",
         },
     },
-    {
-        # https://universe.roboflow.com/baltazar-mu/detection-of-fall-armyworm-infestation-with-deep-learning
-        # Fall armyworm (genus sama dgn ulat grayak, Spodoptera) — pelengkap
-        # data ulat_grayak kalau dataset CSU di atas kurang banyak.
-        "api_key":   "GANTI_API_KEY_KAMU",
-        "workspace": "baltazar-mu",
-        "project":   "detection-of-fall-armyworm-infestation-with-deep-learning",
-        "version":   1,
-        "class_map": {
-            "armyworm": "ulat_grayak",
-            "Armyworm": "ulat_grayak",
-        },
-    },
-    {
-        # https://universe.roboflow.com/demape-brayle-q/golden-apple-snail
-        "api_key":   "GANTI_API_KEY_KAMU",
-        "workspace": "demape-brayle-q",
-        "project":   "golden-apple-snail",
-        "version":   1,
-        "class_map": {
-            "golden apple snail": "keong_mas",
-            "snail":              "keong_mas",
-        },
-    },
-    # Data tikus yang sudah ada (dipakai untuk melatih best.pt saat ini)
-    # berasal dari Roboflow project "rat-detection-6ezx2" (lihat
-    # animal_detector.py). Tambahkan konfigurasinya di sini juga kalau kamu
-    # mau menyatukan data tikus lama ke dataset gabungan ini:
-    # {
-    #     "api_key":   "GANTI_API_KEY_KAMU",
-    #     "workspace": "GANTI",
-    #     "project":   "rat-detection-6ezx2",
-    #     "version":   2,
-    #     "class_map": {"rat": "rat"},
-    # },
 ]
 
 
@@ -140,9 +72,6 @@ def load_yaml(path: Path) -> dict:
 
 def remap_and_copy(src_root: Path, src_names: dict, class_map: dict,
                     dataset_tag: str) -> None:
-    """Salin images+labels dari satu dataset yang sudah diunduh ke
-    training/dataset/, sambil remap class id ke skema target SIPETIK."""
-
     target_id = {name: i for i, name in enumerate(TARGET_CLASSES)}
 
     for split_src, split_dst in (("train", "train"), ("valid", "valid"), ("test", "test")):
@@ -186,11 +115,9 @@ def remap_and_copy(src_root: Path, src_names: dict, class_map: dict,
 
 
 def main() -> None:
-    pending = [d for d in DATASETS if d["api_key"] == "GANTI_API_KEY_KAMU"]
-    if pending:
-        print("ERROR: masih ada entri DATASETS dengan api_key placeholder.")
-        print("Isi dulu api_key (dan verifikasi workspace/project/version/class_map)")
-        print("sesuai instruksi di bagian atas file ini / training/README.md.")
+    api_key = os.environ.get("ROBOFLOW_API_KEY", "").strip()
+    if not api_key:
+        print("ERROR: ROBOFLOW_API_KEY belum diisi di .env")
         sys.exit(1)
 
     if MERGED_DIR.exists():
@@ -198,11 +125,12 @@ def main() -> None:
         shutil.rmtree(MERGED_DIR)
     TMP_DIR.mkdir(parents=True, exist_ok=True)
 
+    rf = Roboflow(api_key=api_key)
+
     for i, cfg in enumerate(DATASETS, 1):
         tag = f"{cfg['workspace']}-{cfg['project']}"
         print(f"\n[{i}/{len(DATASETS)}] Mengunduh {tag} (v{cfg['version']}) ...")
 
-        rf = Roboflow(api_key=cfg["api_key"])
         project = rf.workspace(cfg["workspace"]).project(cfg["project"])
         version = project.version(cfg["version"])
         dl_location = str(TMP_DIR / tag)

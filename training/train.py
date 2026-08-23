@@ -15,9 +15,10 @@ Setelah selesai, weights terbaik ada di:
 """
 
 import argparse
-import shutil
 import sys
 from pathlib import Path
+
+import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import windows_git_fix  # noqa: E402,F401  (fix bug ultralytics di komputer ini — lihat file-nya)
@@ -27,6 +28,20 @@ from ultralytics import YOLO  # noqa: E402
 TRAINING_DIR = Path(__file__).resolve().parent
 DATA_YAML    = TRAINING_DIR / "data.yaml"
 DATASET_DIR  = TRAINING_DIR / "dataset"
+
+
+def resolve_data_yaml() -> Path:
+    """ultralytics me-resolve `path:` relatif di data.yaml terhadap folder
+    'datasets_dir' GLOBAL di settings.json-nya (bukan terhadap lokasi
+    data.yaml itu sendiri) — di komputer ini settingnya kepental ke project
+    lain sama sekali. Supaya training/data.yaml tetap portable/relatif buat
+    dibaca orang, kita generate salinan dengan `path:` absolut di sini saat
+    runtime, tanpa mengubah settings global ultralytics siapa pun."""
+    cfg = yaml.safe_load(DATA_YAML.read_text(encoding="utf-8"))
+    cfg["path"] = str(DATASET_DIR)
+    resolved = TRAINING_DIR / "_data.resolved.yaml"
+    resolved.write_text(yaml.dump(cfg, sort_keys=False), encoding="utf-8")
+    return resolved
 
 
 def parse_args():
@@ -65,7 +80,7 @@ def main():
 
     model = YOLO(args.base)
     model.train(
-        data     = str(DATA_YAML),
+        data     = str(resolve_data_yaml()),
         epochs   = args.epochs,
         imgsz    = args.imgsz,
         batch    = args.batch,
@@ -73,6 +88,8 @@ def main():
         device   = args.device,
         project  = str(TRAINING_DIR / "runs"),
         name     = "sipetik_pest",
+        exist_ok = True,  # selalu timpa training/runs/sipetik_pest/ (bukan
+                           # numpuk sipetik_pest-2, -3, ... tiap run ulang)
     )
 
     best_weights = TRAINING_DIR / "runs" / "sipetik_pest" / "weights" / "best.pt"
@@ -81,10 +98,11 @@ def main():
     if best_weights.exists():
         print(f"  Training selesai. Best weights: {best_weights}")
         print()
+        print("  Model ini punya 2 kelas (wereng_coklat, walang_sangit) — model")
+        print("  TAMBAHAN, bukan pengganti best.pt (yang tetap dipakai untuk tikus).")
         print("  Untuk memakainya di SIPETIK:")
-        print(f"    1. Backup model lama:  copy best.pt best.rat-only.pt")
-        print(f"    2. Ganti dengan yang baru:  copy \"{best_weights}\" best.pt")
-        print("    3. Test: python main.py --model best.pt")
+        print(f"    copy \"{best_weights}\" pest_local.pt")
+        print("    python main.py   (otomatis dipakai kalau pest_local.pt ada)")
     else:
         print("  Training selesai, tapi best.pt tidak ditemukan — cek log di atas.")
     print("=" * 60)

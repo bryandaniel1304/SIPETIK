@@ -68,7 +68,10 @@ ROBOFLOW_MODEL_ID = "rat-detection-6ezx2/2"
 
 # Jalankan inferensi setiap N frame (1 = setiap frame, 3 = lebih ringan)
 INFER_EVERY_N_FRAMES = 2
+HUMAN_CLASSES = {"person", "human"}
+
 ANIMAL_CLASSES = {
+    0:  "person",
     14: "bird",
     15: "cat",
     16: "dog",
@@ -82,6 +85,9 @@ ANIMAL_CLASSES = {
 }
 
 ANIMAL_LABELS = {
+    "person":   "Petani / Manusia",
+    "rat":      "Tikus",
+    "tikus":    "Tikus",
     "bird":     "Burung",
     "cat":      "Kucing",
     "dog":      "Anjing",
@@ -144,7 +150,7 @@ def send_heartbeat(server_url: str) -> None:
 def run(server_url: str, camera_index: int, min_confidence: float, cooldown: int) -> None:
     print()
     print("=" * 55)
-    print("  SIPETIK Animal Detector")
+    print("  SIPETIK Animal & Human Detector")
     print("=" * 55)
     print(f"  Server     : {server_url}")
     print(f"  Kamera     : index {camera_index}")
@@ -192,7 +198,7 @@ def run(server_url: str, camera_index: int, min_confidence: float, cooldown: int
     cap.set(cv2.CAP_PROP_FPS, 60)
 
     actual_fps = cap.get(cv2.CAP_PROP_FPS)
-    print(f"  FPS kamera : {actual_fps:.0f} fps (dikonfirmasi oleh driver kamera)")
+    print(f"  FPS kamera : {actual_fps:.0f} fps")
     print("  Kamera siap. Tekan  Q  pada jendela untuk berhenti.")
     print()
 
@@ -224,6 +230,7 @@ def run(server_url: str, camera_index: int, min_confidence: float, cooldown: int
             fps_start_time  = time.time()
 
         detected_animals = []
+        detected_humans  = []
 
         # Jalankan deteksi setiap N frame untuk performa lebih baik
         if fps_frame_count % INFER_EVERY_N_FRAMES == 0:
@@ -242,7 +249,7 @@ def run(server_url: str, camera_index: int, min_confidence: float, cooldown: int
                         x1, y1 = int(x - w/2), int(y - h/2)
                         x2, y2 = int(x + w/2), int(y + h/2)
                         detected_animals.append((raw_name, label, conf, [x1, y1, x2, y2]))
-                        display_label = f"{label}  {conf:.0%}"
+                        display_label = f"[HAMA] {label}  {conf:.0%}"
                         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 220), 2)
                         cv2.rectangle(frame, (x1, y1-22), (x1+len(display_label)*9, y1), (0, 0, 220), -1)
                         cv2.putText(frame, display_label, (x1+2, y1-5),
@@ -257,15 +264,25 @@ def run(server_url: str, camera_index: int, min_confidence: float, cooldown: int
                     for box in result.boxes:
                         cls_id   = int(box.cls[0])
                         conf     = float(box.conf[0])
-                        raw_name = class_names.get(cls_id, str(cls_id))
-                        label    = ANIMAL_LABELS.get(raw_name, raw_name)
+                        raw_name = str(class_names.get(cls_id, str(cls_id))).lower()
                         x1, y1, x2, y2 = map(int, box.xyxy[0])
-                        detected_animals.append((raw_name, label, conf, [x1, y1, x2, y2]))
-                        display_label = f"{label}  {conf:.0%}"
-                        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 220), 2)
-                        cv2.rectangle(frame, (x1, y1-22), (x1+len(display_label)*9, y1), (0, 0, 220), -1)
-                        cv2.putText(frame, display_label, (x1+2, y1-5),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 1)
+
+                        if raw_name in HUMAN_CLASSES:
+                            label = "Petani / Manusia"
+                            detected_humans.append((label, conf, [x1, y1, x2, y2]))
+                            display_label = f"[AMAN] {label} {conf:.0%}"
+                            cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 200, 0), 2)
+                            cv2.rectangle(frame, (x1, y1-22), (x1+len(display_label)*9, y1), (255, 200, 0), -1)
+                            cv2.putText(frame, display_label, (x1+2, y1-5),
+                                        cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 0, 0), 1)
+                        else:
+                            label = ANIMAL_LABELS.get(raw_name, raw_name.title())
+                            detected_animals.append((raw_name, label, conf, [x1, y1, x2, y2]))
+                            display_label = f"[HAMA] {label} {conf:.0%}"
+                            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 220), 2)
+                            cv2.rectangle(frame, (x1, y1-22), (x1+len(display_label)*9, y1), (0, 0, 220), -1)
+                            cv2.putText(frame, display_label, (x1+2, y1-5),
+                                        cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 1)
 
         # Hitung frame tanpa binatang, kirim "clear" setelah CLEAR_FRAMES berturut-turut
         if detected_animals:
@@ -277,7 +294,7 @@ def run(server_url: str, camera_index: int, min_confidence: float, cooldown: int
                 ts = datetime.now().strftime("%H:%M:%S")
                 print(f"  [{ts}] Binatang tidak ada lagi → Dashboard dibersihkan.")
 
-        # Trigger buzzer jika cooldown habis
+        # Trigger buzzer jika cooldown habis (HANYA UNTUK BINATANG/HAMA, BUKAN MANUSIA)
         if detected_animals and (now - last_trigger_at) >= cooldown:
             # Ambil deteksi dengan confidence tertinggi
             best_animal, best_label, best_conf, _ = max(detected_animals, key=lambda x: x[2])
@@ -293,16 +310,19 @@ def run(server_url: str, camera_index: int, min_confidence: float, cooldown: int
 
         # ── Overlay status ────────────────────────────────────────
         if detected_animals:
-            status_text  = f"BINATANG: {len(detected_animals)} terdeteksi"
+            status_text  = f"HAMA: {len(detected_animals)} terdeteksi (Buzzer Aktif)"
             status_color = (0, 0, 220)
+        elif detected_humans:
+            status_text  = f"AMAN: Petani / Manusia Terdeteksi ({len(detected_humans)} orang)"
+            status_color = (255, 200, 0)
         else:
-            status_text  = "Aman — tidak ada binatang"
+            status_text  = "Aman — tidak ada hama"
             status_color = (0, 180, 0)
 
         # Background strip atas
         cv2.rectangle(frame, (0, 0), (frame.shape[1], 38), (0, 0, 0), -1)
         cv2.putText(frame, status_text, (8, 26),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, status_color, 2)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.65, status_color, 2)
         cv2.putText(frame, f"{fps_display:.1f} fps", (frame.shape[1] - 85, 26),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.55, (180, 180, 180), 1)
 
@@ -310,10 +330,10 @@ def run(server_url: str, camera_index: int, min_confidence: float, cooldown: int
         remaining = max(0.0, cooldown - (now - last_trigger_at))
         if remaining > 0:
             cd_text = f"Cooldown: {remaining:.1f}s"
-            cv2.putText(frame, cd_text, (frame.shape[1] - 170, 26),
+            cv2.putText(frame, cd_text, (frame.shape[1] - 180, 26),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 165, 255), 1)
 
-        cv2.imshow("SIPETIK Animal Detector  [Q = keluar]", frame)
+        cv2.imshow("SIPETIK AI Detector  [Q = keluar]", frame)
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break

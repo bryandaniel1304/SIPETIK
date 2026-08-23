@@ -3,15 +3,19 @@
 SIPETIKCAMERA — Pest Detection with SIPETIK Dashboard Integration
 =================================================================
 Deteksi hama sawah via webcam dan kirim notifikasi ke dashboard SIPETIK
-secara real-time. Dua sumber deteksi digabung:
+secara real-time. Beberapa sumber deteksi digabung:
 
-  1. Model YOLOv8 lokal (best.pt) — cepat, jalan offline. Kelas apa pun
-     yang ada di model ini otomatis dipakai (lihat training/README.md
-     untuk melatih ulang supaya mengenali lebih banyak hama).
-  2. Model-model hasil training di Roboflow, dipanggil lewat API hosted
-     mereka (https://serverless.roboflow.com) — dijalankan di thread
-     terpisah tiap beberapa detik supaya tidak bikin preview kamera patah-
-     patah. Aktif otomatis kalau ROBOFLOW_API_KEY diisi di file .env.
+  1. Model YOLOv8 lokal utama (best.pt) — tikus. Cepat, jalan offline.
+  2. yolov8n.pt (COCO) — deteksi manusia/petani & burung, dipakai kalau
+     model utama belum kenal kelas "person" (supaya buzzer TIDAK bunyi ke
+     orang, cuma ke hama).
+  3. pest_local.pt (opsional) — wereng batang coklat + walang sangit,
+     lokal juga (lihat training/README.md untuk cara training-nya).
+  4. Model/workflow di Roboflow, dipanggil lewat API hosted mereka
+     (https://serverless.roboflow.com) untuk ulat grayak & keong mas —
+     dua hama yang belum ada dataset lokal yang layak. Dijalankan di
+     thread terpisah supaya tidak bikin preview kamera patah-patah. Aktif
+     otomatis kalau ROBOFLOW_API_KEY diisi di file .env.
 
 Jalankan:
     python main.py
@@ -80,8 +84,11 @@ REMOTE_CHECK_INTERVAL  = 3.0   # detik antar panggilan API (jaga latency & kuota
 REMOTE_MIN_CONFIDENCE  = 0.60
 
 REMOTE_MODEL_IDS = [
-    "paddy-rice-insect-pest-dataset/3",
     "golden-apple-snail/2",
+    # "paddy-rice-insect-pest-dataset/3" — DILEPAS dari cloud. Wereng batang
+    # coklat sekarang dideteksi LOKAL oleh pest_local.pt (dilatih dari
+    # dataset yang sama, lihat training/README.md), tidak perlu dipanggil
+    # dua kali (lokal + cloud) untuk kelas yang sama.
     # "detection-of-fall-armyworm-infestation-with-deep-learning/1" —
     # DIMATIKAN. Dites langsung: model ini salah kenali wajah orang di depan
     # kamera sebagai "ulat grayak" (confidence 0.6–0.75), bukan cuma di
@@ -91,17 +98,16 @@ REMOTE_MODEL_IDS = [
     # model/data ulat grayak yang lebih baik (lihat training/README.md).
 ]
 
-# Walang sangit & ulat grayak dipanggil lewat 1 Workflow yang sama
-# (segmentasi open-vocabulary — daftar kelas dikirim saat runtime lewat
-# parameter "classes", jadi 1 workflow bisa dipakai untuk banyak hama
-# sekaligus, tidak perlu bikin workflow baru per hama). Dipakai untuk ulat
-# grayak karena model project fall-armyworm sebelumnya tidak reliable
-# (lihat catatan REMOTE_MODEL_IDS di atas & training/README.md) — workflow
-# ini sudah dites bersih (tidak false-positive di gambar noise).
+# Ulat grayak dipanggil lewat Workflow open-vocabulary (segmentasi umum,
+# daftar kelas dikirim saat runtime lewat parameter "classes"). Walang
+# sangit TIDAK dicari di sini lagi — sekarang dideteksi LOKAL oleh
+# pest_local.pt (lihat training/README.md), workflow ini dites bersih
+# (tidak false-positive di gambar noise) tapi tetap butuh internet, jadi
+# dipakai seperlunya saja (cuma untuk kelas yang belum ada model lokalnya).
 ZERO_SHOT_WORKFLOW = {
     "workspace_name": "bryans-workspace-cfpnz",
     "workflow_id":    "general-segmentation-api",
-    "classes_param":  "walang sangit, Walang sangit, ulat grayak, Ulat grayak",
+    "classes_param":  "ulat grayak, Ulat grayak",
 }
 
 # Nama kelas yang dikembalikan tiap model Roboflow di atas tidak selalu
@@ -172,17 +178,59 @@ def send_heartbeat(server_url: str) -> None:
 
 
 # ================================================================
-#  FUNGSI BANTU
+#  PEMETAAN KELAS & LABEL BAHASA INDONESIA
 # ================================================================
-def draw_detection(frame, box, class_name, conf, source="local"):
-    color = (30, 220, 30) if source == "local" else (0, 165, 255)  # hijau lokal, oranye cloud
-    x1, y1, x2, y2 = map(int, box)
-    cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+HUMAN_CLASSES = {"person", "human", "man", "woman"}
 
-    suffix = "" if source == "local" else "  (cloud)"
-    label = f"{class_name} {conf:.2f}{suffix}"
+PEST_LABELS = {
+    "rat":                 "Tikus",
+    "tikus":               "Tikus",
+    "bird":                "Burung",
+    "burung":              "Burung",
+    "walang_sangit":       "Walang Sangit",
+    "wereng_coklat":       "Wereng Batang Coklat",
+    "ulat_grayak":         "Ulat Grayak",
+    "keong_mas":           "Keong Mas",
+    "dog":                 "Anjing",
+    "cat":                 "Kucing",
+    "cow":                 "Sapi",
+    "pig":                 "Babi Hutan",
+    "sheep":               "Kambing",
+    "horse":               "Kuda",
+}
+
+
+def get_display_label(raw_name: str) -> tuple[str, bool]:
+    """Mengembalikan (display_label, is_human)."""
+    low = raw_name.lower().strip()
+    if low in HUMAN_CLASSES:
+        return "Petani / Manusia", True
+    label = PEST_LABELS.get(low, low.replace("_", " ").title())
+    return label, False
+
+
+# ================================================================
+#  FUNGSI BANTU VISUALISASI
+# ================================================================
+def draw_detection(frame, box, class_name, conf, source="local", is_human=False):
+    if is_human:
+        # Warna Biru Cyan untuk Manusia/Petani (Aman, Non-Agresif)
+        box_color = (255, 200, 0)       # BGR: Cyan-Biru
+        label_text = f"[AMAN] Petani ({conf:.0%})"
+        text_color = (0, 0, 0)
+    else:
+        # Warna Merah untuk Hama Lokal, Oranye untuk Cloud
+        box_color = (0, 0, 230) if source == "local" else (0, 140, 255)
+        suffix = "" if source == "local" else " (cloud)"
+        label_text = f"[HAMA] {class_name} ({conf:.0%}){suffix}"
+        text_color = (255, 255, 255)
+
+    x1, y1, x2, y2 = map(int, box)
+    cv2.rectangle(frame, (x1, y1), (x2, y2), box_color, 2)
+
     (text_w, text_h), baseline = cv2.getTextSize(
-        label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)
+        label_text, cv2.FONT_HERSHEY_SIMPLEX, 0.55, 2
+    )
     label_x = x1
     label_y = y1 - 8
     if label_y - text_h - baseline < 0:
@@ -190,9 +238,9 @@ def draw_detection(frame, box, class_name, conf, source="local"):
 
     bg_tl = (label_x, label_y - text_h - baseline)
     bg_br = (label_x + text_w + 8, label_y + baseline)
-    cv2.rectangle(frame, bg_tl, bg_br, color, -1)
-    cv2.putText(frame, label, (label_x + 4, label_y - 2),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2, cv2.LINE_AA)
+    cv2.rectangle(frame, bg_tl, bg_br, box_color, -1)
+    cv2.putText(frame, label_text, (label_x + 4, label_y - 2),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.55, text_color, 2, cv2.LINE_AA)
 
 
 def passes_size_filter(frame, box, min_area, max_area):
@@ -206,8 +254,7 @@ def passes_size_filter(frame, box, min_area, max_area):
 
 
 def parse_remote_predictions(preds, force_slug=None):
-    """Ubah list prediction mentah dari Roboflow (format model biasa atau
-    format workflow) jadi list (slug, raw_class_name, conf, xyxy)."""
+    """Ubah list prediction mentah dari Roboflow jadi list (slug, raw_class_name, conf, xyxy)."""
     out = []
     for p in preds or []:
         conf = float(p.get("confidence", 0.0))
@@ -234,9 +281,7 @@ def parse_remote_predictions(preds, force_slug=None):
 
 
 def query_remote_pests(client) -> list:
-    """Panggil semua model + workflow Roboflow untuk 1 frame. Tiap sumber
-    dibungkus try/except sendiri supaya 1 endpoint error tidak menggagalkan
-    yang lain."""
+    """Panggil semua model + workflow Roboflow untuk 1 frame."""
     frame = _LATEST_FRAME.get("frame")
     if frame is None:
         return []
@@ -260,9 +305,6 @@ def query_remote_pests(client) -> list:
             use_cache=True,
         )
         preds = (result[0].get("predictions") or {}).get("predictions", []) if result else []
-        # Tanpa force_slug — hasil bisa "walang sangit" ATAU "ulat grayak"
-        # (keduanya diminta lewat classes_param), classify_remote_label()
-        # yang menentukan slug-nya dari nama kelas yang benar-benar dibalikin.
         detections += parse_remote_predictions(preds)
     except Exception as exc:
         print(f"  [WARN] Roboflow workflow zero-shot error: {exc}")
@@ -270,9 +312,6 @@ def query_remote_pests(client) -> list:
     return detections
 
 
-# Frame terbaru & hasil deteksi remote dibagi antara main loop dan
-# background thread lewat dict sederhana (aman dari race condition berkat
-# GIL Python untuk assignment reference biasa — cukup untuk kebutuhan ini).
 _LATEST_FRAME      = {"frame": None}
 _REMOTE_DETECTIONS = {"items": []}
 
@@ -292,7 +331,7 @@ def remote_worker(api_key: str, interval: float, stop_event: threading.Event) ->
 # ================================================================
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="SIPETIKCAMERA — Pest detection + SIPETIK dashboard integration"
+        description="SIPETIKCAMERA — Deteksi Hama & Manusia + Integrasi Dashboard SIPETIK"
     )
     parser.add_argument("--model",    type=str,   default="best.pt",
                         help="Path ke model YOLO (.pt)")
@@ -300,18 +339,18 @@ def parse_args():
                         help="URL server Laravel SIPETIK")
     parser.add_argument("--camera",   type=int,   default=0,
                         help="Index kamera (default: 0)")
-    parser.add_argument("--conf",     type=float, default=0.65,
-                        help="Confidence threshold (default: 0.65)")
+    parser.add_argument("--conf",     type=float, default=0.55,
+                        help="Confidence threshold (default: 0.55)")
     parser.add_argument("--imgsz",    type=int,   default=640,
                         help="Ukuran inferensi (default: 640)")
     parser.add_argument("--min-area", type=float, default=0.01,
                         help="Abaikan box lebih kecil dari fraksi ini")
-    parser.add_argument("--max-area", type=float, default=0.70,
+    parser.add_argument("--max-area", type=float, default=0.85,
                         help="Abaikan box lebih besar dari fraksi ini")
     parser.add_argument("--cooldown", type=int,   default=10,
                         help="Jeda minimal antar trigger buzzer (detik)")
     parser.add_argument("--no-remote", action="store_true",
-                        help="Matikan deteksi tambahan lewat Roboflow API (hemat kuota/tanpa internet)")
+                        help="Matikan deteksi tambahan lewat Roboflow API")
     parser.add_argument("--remote-interval", type=float, default=REMOTE_CHECK_INTERVAL,
                         help="Jeda antar panggilan Roboflow API (detik)")
     parser.add_argument("--roboflow-key", type=str, default=None,
@@ -331,27 +370,46 @@ def main():
     use_remote = (not args.no_remote) and bool(api_key) and REMOTE_SDK_AVAILABLE
 
     print()
-    print("=" * 55)
-    print("  SIPETIKCAMERA — SIPETIK Pest Detector")
-    print("=" * 55)
-    print(f"  Server   : {args.server}")
-    print(f"  Model    : {model_file}")
-    print(f"  Kamera   : index {args.camera}")
-    print(f"  Conf     : {args.conf}")
-    print(f"  Cooldown : {args.cooldown} detik")
-    if use_remote:
-        print(f"  Cloud    : AKTIF (Roboflow, tiap {args.remote_interval:.0f}s) — "
-              f"{len(REMOTE_MODEL_IDS) + 1} model tambahan")
-    elif not api_key:
-        print("  Cloud    : nonaktif (ROBOFLOW_API_KEY belum diisi di .env)")
-    elif not REMOTE_SDK_AVAILABLE:
-        print("  Cloud    : nonaktif (paket 'inference-sdk' belum terinstall)")
-    else:
-        print("  Cloud    : nonaktif (--no-remote)")
-    print("=" * 55)
-    print()
+    print("=" * 60)
+    print("  SIPETIKCAMERA — Sistem Deteksi Cerdas Hama Sawah & Manusia")
+    print("=" * 60)
+    print(f"  Server       : {args.server}")
+    print(f"  Model Utama  : {model_file}")
+    print(f"  Kamera       : index {args.camera}")
+    print(f"  Confidence   : >= {args.conf:.0%}")
+    print(f"  Cooldown     : {args.cooldown} detik antar trigger buzzer")
+    
+    # Load model utama
+    model_main = YOLO(model_file)
+    
+    # Cek apakah model utama sudah memiliki kelas person / burung
+    # Jika model utama adalah custom (seperti best.pt yang hanya deteksi tikus),
+    # kita muat juga yolov8n.pt secara ringan untuk mengenali Manusia & Burung.
+    model_coco = None
+    main_has_person = any("person" in str(name).lower() for name in model_main.names.values())
+    
+    if not main_has_person and os.path.exists("yolov8n.pt"):
+        print("  Model Sekunder: yolov8n.pt (Deteksi Petani/Manusia & Burung)")
+        model_coco = YOLO("yolov8n.pt")
 
-    model = YOLO(model_file)
+    # Model lokal tambahan: wereng batang coklat + walang sangit (lihat
+    # training/README.md). Kalau file ini belum ada (belum ditraining),
+    # kedua hama itu tetap terdeteksi lewat cloud sebagai fallback — lihat
+    # REMOTE_MODEL_IDS / ZERO_SHOT_WORKFLOW di atas.
+    model_pest_local = None
+    pest_local_path  = "pest_local.pt"
+    if os.path.exists(pest_local_path):
+        print(f"  Model Tambahan: {pest_local_path} (Wereng Batang Coklat + Walang Sangit, lokal)")
+        model_pest_local = YOLO(pest_local_path)
+
+    if use_remote:
+        print(f"  Cloud        : AKTIF (Roboflow, tiap {args.remote_interval:.0f}s)")
+    elif not api_key:
+        print("  Cloud        : nonaktif (ROBOFLOW_API_KEY belum diisi)")
+    else:
+        print("  Cloud        : nonaktif")
+    print("=" * 60)
+    print()
 
     stop_event   = threading.Event()
     remote_thread = None
@@ -371,7 +429,7 @@ def main():
     cap.set(cv2.CAP_PROP_FRAME_WIDTH,  640)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
-    print("  Kamera siap. Tekan Q untuk berhenti.")
+    print("  Kamera siap. Tekan Q pada jendela untuk berhenti.")
     print()
 
     last_trigger_at   = 0.0
@@ -395,7 +453,7 @@ def main():
                 print("ERROR: Tidak bisa membaca frame dari kamera.")
                 break
 
-            _LATEST_FRAME["frame"] = frame  # dibaca oleh remote_worker di thread lain
+            _LATEST_FRAME["frame"] = frame
 
             # Hitung FPS
             fps_count += 1
@@ -404,68 +462,130 @@ def main():
                 fps_count   = 0
                 fps_start   = time.time()
 
-            # Deteksi lokal (YOLOv8 / best.pt)
-            results = model.predict(frame, conf=args.conf,
-                                    imgsz=args.imgsz, verbose=False)
+            detected_pests  = []
+            detected_humans = []
 
-            detected_pests = []
-            for result in results:
+            # 1. Inferensi Model Utama (best.pt atau yolov8n.pt)
+            results_main = model_main.predict(frame, conf=args.conf,
+                                              imgsz=args.imgsz, verbose=False)
+
+            for result in results_main:
                 for b in result.boxes:
                     cls_id     = int(b.cls[0])
                     conf       = float(b.conf[0])
                     xyxy       = b.xyxy[0].tolist()
-                    class_name = result.names.get(cls_id, str(cls_id))
+                    raw_name   = result.names.get(cls_id, str(cls_id))
 
                     if not passes_size_filter(frame, xyxy, args.min_area, args.max_area):
                         continue
 
-                    draw_detection(frame, xyxy, class_name, conf, source="local")
-                    detected_pests.append((class_name, conf))
+                    label, is_human = get_display_label(raw_name)
+                    if is_human:
+                        detected_humans.append((label, conf, xyxy))
+                    else:
+                        detected_pests.append((raw_name, label, conf, xyxy))
 
-            # Deteksi tambahan dari Roboflow (di-refresh tiap REMOTE_CHECK_INTERVAL
-            # detik oleh background thread, di-gambar ulang tiap frame)
+            # 2. Inferensi Model Sekunder (COCO untuk deteksi Manusia & Burung jika model utama spesifik hama)
+            if model_coco is not None and not detected_humans:
+                # Class 0: person, Class 14: bird
+                results_coco = model_coco.predict(frame, conf=args.conf,
+                                                  classes=[0, 14],
+                                                  imgsz=args.imgsz, verbose=False)
+                for result in results_coco:
+                    for b in result.boxes:
+                        cls_id   = int(b.cls[0])
+                        conf     = float(b.conf[0])
+                        xyxy     = b.xyxy[0].tolist()
+                        raw_name = result.names.get(cls_id, str(cls_id))
+
+                        if not passes_size_filter(frame, xyxy, args.min_area, args.max_area):
+                            continue
+
+                        label, is_human = get_display_label(raw_name)
+                        if is_human:
+                            detected_humans.append((label, conf, xyxy))
+                        else:
+                            detected_pests.append((raw_name, label, conf, xyxy))
+
+            # 3. Inferensi Model Lokal Tambahan (pest_local.pt — wereng
+            #    batang coklat + walang sangit, kalau sudah ditraining)
+            if model_pest_local is not None:
+                results_pest_local = model_pest_local.predict(
+                    frame, conf=args.conf, imgsz=args.imgsz, verbose=False)
+                for result in results_pest_local:
+                    for b in result.boxes:
+                        cls_id   = int(b.cls[0])
+                        conf     = float(b.conf[0])
+                        xyxy     = b.xyxy[0].tolist()
+                        raw_name = result.names.get(cls_id, str(cls_id))
+
+                        if not passes_size_filter(frame, xyxy, args.min_area, args.max_area):
+                            continue
+
+                        label, is_human = get_display_label(raw_name)
+                        if is_human:
+                            detected_humans.append((label, conf, xyxy))
+                        else:
+                            detected_pests.append((raw_name, label, conf, xyxy))
+
+            # 4. Deteksi Cloud Roboflow (jika aktif)
             if use_remote:
                 for slug, raw_name, conf, box in _REMOTE_DETECTIONS["items"]:
                     if not passes_size_filter(frame, box, args.min_area, args.max_area):
                         continue
-                    draw_detection(frame, box, slug, conf, source="cloud")
-                    detected_pests.append((slug, conf))
+                    label, is_human = get_display_label(slug)
+                    if is_human:
+                        detected_humans.append((label, conf, box))
+                    else:
+                        detected_pests.append((slug, label, conf, box))
 
-            # Logika clear / trigger
+            # Gambar Bounding Box Manusia (Cyan/Biru - Aman)
+            for label, conf, box in detected_humans:
+                draw_detection(frame, box, label, conf, source="local", is_human=True)
+
+            # Gambar Bounding Box Hama (Merah - Bahaya)
+            for raw_slug, label, conf, box in detected_pests:
+                draw_detection(frame, box, label, conf, source="local", is_human=False)
+
+            # ── Logika Buzzer & Notifikasi SIPETIK ───────────────────
+            # PENTING: Hanya hama yang memicu buzzer! Manusia TIDAK memicu buzzer.
             if detected_pests:
                 no_pest_frames = 0
-                # Trigger buzzer setelah cooldown habis
                 if now - last_trigger_at >= args.cooldown:
-                    best = max(detected_pests, key=lambda x: x[1])
-                    ts   = datetime.now().strftime("%H:%M:%S")
-                    print(f"  [{ts}] TERDETEKSI: {best[0]} ({best[1]:.0%}) → Buzzer!")
-                    ok = notify_detection(args.server, best[0], best[1])
+                    best_slug, best_label, best_conf, _ = max(detected_pests, key=lambda x: x[2])
+                    ts = datetime.now().strftime("%H:%M:%S")
+                    print(f"  [{ts}] ⚠️ HAMA TERDETEKSI: {best_label} ({best_conf:.0%}) → Buzzer ESP32!")
+                    ok = notify_detection(args.server, best_slug, best_conf)
                     if ok:
                         last_trigger_at = now
-                        print(f"          Server OK. Cooldown {args.cooldown}s dimulai.")
+                        print(f"          Notifikasi Dashboard Berhasil. Cooldown {args.cooldown}s.")
             else:
                 no_pest_frames += 1
                 if no_pest_frames == CLEAR_FRAMES:
                     notify_clear(args.server)
                     ts = datetime.now().strftime("%H:%M:%S")
-                    print(f"  [{ts}] Tidak ada hama → Dashboard dibersihkan.")
+                    print(f"  [{ts}] Sawah aman — Dashboard dibersihkan.")
 
-            # Overlay status
+            # ── Status Bar Banner di Atas ────────────────────────────
             if detected_pests:
-                status_text  = f"HAMA: {len(detected_pests)} terdeteksi"
-                status_color = (0, 80, 220)
+                best_slug, best_label, best_conf, _ = max(detected_pests, key=lambda x: x[2])
+                status_text  = f"[!] HAMA TERDETEKSI: {best_label} ({len(detected_pests)} objek) - BUZZER AKTIF"
+                status_color = (0, 0, 240)    # Merah
+            elif detected_humans:
+                status_text  = f"[OK] PETANI / MANUSIA DI LOKASI ({len(detected_humans)} orang) - AMAN (Buzzer OFF)"
+                status_color = (255, 200, 0)  # Cyan
             else:
-                status_text  = "Aman — tidak ada hama"
-                status_color = (0, 180, 0)
+                status_text  = "[OK] LAHAN AMAN — Tidak Ada Hama"
+                status_color = (0, 200, 0)    # Hijau
 
-            cv2.rectangle(frame, (0, 0), (frame.shape[1], 38), (0, 0, 0), -1)
-            cv2.putText(frame, status_text, (8, 26),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, status_color, 2)
+            cv2.rectangle(frame, (0, 0), (frame.shape[1], 42), (20, 20, 20), -1)
+            cv2.putText(frame, status_text, (10, 28),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.62, status_color, 2, cv2.LINE_AA)
             cv2.putText(frame, f"{fps_display:.1f} fps",
-                        (frame.shape[1] - 85, 26),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.55, (180, 180, 180), 1)
+                        (frame.shape[1] - 95, 28),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.55, (200, 200, 200), 1, cv2.LINE_AA)
 
-            cv2.imshow("SIPETIKCAMERA  [Q = keluar]", frame)
+            cv2.imshow("SIPETIK AI CAMERA — Deteksi Hama & Manusia [Q = Keluar]", frame)
 
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
@@ -482,3 +602,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

@@ -1,18 +1,21 @@
-# SIPETIK — dataset config untuk training model deteksi hama sawah multi-kelas.
-# Dibuat/diisi otomatis oleh download_datasets.py, jangan diedit manual kecuali
-# kamu tahu persis apa yang diubah (urutan `names` harus konsisten dengan
-# class id di file label .txt, dan harus sama dengan mapping di
-# app/Http/Controllers/Api/CameraController.php -> animalLabel()).
+# SIPETIK — dataset config untuk model lokal TAMBAHAN (wereng batang coklat
+# + walang sangit). Tikus tetap dideteksi oleh best.pt yang sudah ada
+# (terpisah, tidak digabung — sumber data training tikus yang asli sudah
+# tidak diketahui workspace-nya, jadi tidak diutak-atik supaya tidak rusak).
+#
+# Model hasil training file ini dipakai sebagai model LOKAL KEDUA di
+# main.py (lihat PEST_LOCAL_MODEL_PATH), bukan menggantikan best.pt.
+#
+# Ulat grayak & keong mas TIDAK ada di sini — datanya belum cukup untuk
+# training lokal yang layak (lihat training/README.md), jadi untuk
+# sementara tetap dideteksi lewat Roboflow API (mode cloud di main.py).
 
 path: dataset      # relatif terhadap folder training/
 train: train/images
 val: valid/images
 test: test/images  # opsional, boleh tidak ada
 
-nc: 5
+nc: 2
 names:
-  0: rat              # tikus
-  1: walang_sangit     # walang sangit / rice bug
-  2: wereng_coklat      # wereng batang coklat / brown planthopper
-  3: ulat_grayak        # ulat grayak / armyworm
-  4: keong_mas          # keong mas / golden apple snail
+  0: wereng_coklat   # wereng batang coklat / brown planthopper
+  1: walang_sangit    # walang sangit / rice bug

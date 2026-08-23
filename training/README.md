@@ -1,233 +1,135 @@
-# SIPETIK — Ekspansi Deteksi Hama (5 kelas)
+# SIPETIK — Model Lokal untuk Wereng Batang Coklat + Walang Sangit
 
-Model `best.pt` yang sekarang dipakai `main.py` hanya dilatih untuk **1 kelas: tikus**
-(`nc: 1, names: {0: 'rat'}` — dicek langsung dari isi file model).
+Status deteksi 5 hama SIPETIK sekarang:
 
-> **Update:** cara tercepat untuk menambah cakupan deteksi ternyata bukan
-> training lokal, tapi memanfaatkan model-model yang **sudah dilatih orang
-> lain di Roboflow** lewat API hosted mereka. `main.py` sekarang punya mode
-> hybrid: tikus tetap dideteksi lokal (cepat, offline) via `best.pt`, dan 4
-> hama lain dipanggil lewat API Roboflow di background thread (aktif
-> otomatis kalau `ROBOFLOW_API_KEY` diisi di `.env`). Ini **sudah aktif**,
-> tidak perlu training apa pun. Sisa dokumen di bawah ini tetap relevan
-> kalau suatu saat kamu mau melatih model lokal sendiri (mis. supaya bisa
-> jalan tanpa internet, atau akurasi hosted model kurang bagus untuk kamera
-> kamu).
+| # | Hama | Sumber | Status |
+|---|------|--------|--------|
+| 0 | Tikus | Lokal — `best.pt` | Sudah jalan (model asli project) |
+| 1 | Wereng batang coklat | Lokal — `pest_local.pt` | **Baru**, dilatih dari data ini |
+| 2 | Walang sangit | Lokal — `pest_local.pt` | **Baru**, dilatih dari data ini |
+| 3 | Ulat grayak | Cloud — Roboflow workflow | Belum ada dataset lokal yang layak |
+| 4 | Keong mas | Cloud — Roboflow model | Belum ada dataset lokal yang layak |
 
-Kelas target (dipakai baik oleh mode lokal maupun mode cloud):
+Kenapa ulat grayak & keong mas belum bisa lokal — sudah dicek langsung lewat
+Roboflow SDK (bukan tebakan), lihat bagian **"Kenapa cuma 2 kelas"** di bawah.
 
-| # | Kelas (slug)     | Nama Indonesia          |
-|---|------------------|--------------------------|
-| 0 | `rat`            | Tikus                    |
-| 1 | `walang_sangit`  | Walang Sangit             |
-| 2 | `wereng_coklat`  | Wereng Batang Coklat       |
-| 3 | `ulat_grayak`    | Ulat Grayak                |
-| 4 | `keong_mas`      | Keong Mas                  |
-
-Slug ini **harus** konsisten di tiga tempat: `training/data.yaml`, model hasil
-training, dan `animalLabel()` di
-[app/Http/Controllers/Api/CameraController.php](../app/Http/Controllers/Api/CameraController.php)
-(sudah disiapkan / sudah di-update).
+`main.py` otomatis pakai `pest_local.pt` kalau file itu ada di root project
+(jalan berdampingan dengan `best.pt`, tidak menggantikannya — lihat header
+docstring `main.py`).
 
 ---
 
-## Mode cloud (aktif sekarang) — cara pakai & keterbatasannya
-
-- Isi `ROBOFLOW_API_KEY` di `.env` (sudah ada kalau kamu ikuti setup awal).
-- Jalankan seperti biasa: `python main.py`. Kalau key terdeteksi, terminal
-  akan menampilkan `Cloud: AKTIF`.
-- Box hasil deteksi cloud digambar warna **oranye** dengan label
-  `(cloud)`, beda dari box lokal (hijau), supaya kelihatan sumbernya.
-- Matikan dengan `--no-remote` kalau tidak ada internet atau mau hemat
-  kuota API gratis Roboflow.
-- Model/workflow yang dipakai (lihat `REMOTE_MODEL_IDS` &
-  `ZERO_SHOT_WORKFLOW` di `main.py`):
-  - `paddy-rice-insect-pest-dataset/3` (multi-hama padi, termasuk wereng)
-  - `golden-apple-snail/2` (keong mas)
-  - 1 workflow segmentasi open-vocabulary di workspace kamu sendiri, dicari
-    2 kelas sekaligus lewat parameter `classes`: **walang sangit** dan
-    **ulat grayak**. Workflow ini tidak perlu dibuat baru per hama — cukup
-    tambahkan nama hama ke `classes_param`, jadi kalau nanti mau nambah
-    kelas lain (belalang, hispa padi, penggerek batang — sudah kelihatan
-    ada di kandidat dataset padi Indonesia yang saya temukan) tinggal
-    ditambahkan ke situ (plus update `REMOTE_KEYWORD_MAP` &
-    `CameraController::animalLabel()` biar konsisten).
-  - ~~`detection-of-fall-armyworm-infestation-with-deep-learning/1`~~ —
-    **dimatikan permanen**, diganti workflow di atas untuk ulat grayak.
-
-**Keterbatasan yang sudah saya uji langsung (bukan asumsi):**
-- Nama kelas yang dikembalikan tiap model **tidak seragam** (mis. model
-  fall-armyworm mengembalikan `"FAW_Day1"`, `"FAW_Day3"`, dst — bukan
-  `"armyworm"`), jadi `main.py` memetakan berdasar **kata kunci**
-  (`REMOTE_KEYWORD_MAP`), bukan exact-match.
-- Model fall-armyworm (dipakai sebelumnya buat ulat grayak) **tidak
-  reliable untuk kamera webcam biasa** — dicoba dengan gambar noise acak
-  sempat false-positive (confidence ~0.65), lalu dikonfirmasi lagi di
-  kamera sungguhan: model ini salah mengenali **wajah orang** sebagai
-  "ulat grayak" dengan confidence 0.6–0.75. Kelihatannya model itu dilatih
-  khusus foto close-up daun yang sudah terserang, bukan untuk membedakan
-  "ada hama" vs "bukan hama" di scene umum. Sudah diganti permanen dengan
-  workflow open-vocabulary di atas — baru dites dengan gambar noise acak
-  (bersih, tidak false-positive), **belum sempat dites langsung ke kamera
-  dengan wajah orang** seperti kasus yang mengungkap masalah di model
-  sebelumnya. Coba dulu di kamera kamu sendiri (arahkan ke wajah, ke
-  ruangan kosong, dll — bukan cuma ke sawah) sebelum 100% mengandalkannya
-  untuk trigger buzzer otomatis.
-- Deteksi cloud butuh internet & tunduk pada limit kuota gratis akun
-  Roboflow kamu; kalau kena limit/timeout, log `[WARN]` muncul di terminal
-  tapi deteksi lokal (tikus) tetap jalan normal.
-- **API key kamu jangan pernah ditaruh langsung di source code** yang
-  masuk git — selalu lewat `.env` (sudah di-`.gitignore`). Kalau khawatir
-  key sempat bocor, tinggal generate ulang di roboflow.com → Settings →
-  API Keys, lalu update `.env`.
-
----
-
-## 0. Kenapa deteksinya "limited" sebelumnya?
-
-Karena model dilatih dari 1 dataset tikus saja. Ini bukan bug di `main.py` —
-script itu sudah generic (otomatis pakai kelas apa pun yang ada di `.pt` yang
-dipakai). Yang perlu diubah adalah **model-nya**, dengan data lebih banyak
-kelas.
-
-> Catatan tambahan yang saya temukan & sudah diperbaiki di komputer ini:
-> `import ultralytics` sebelumnya selalu crash (`WinError 1337`) gara-gara bug
-> Windows di folder `D:\WpSystem` (profil yang direlokasi ke drive D:).
-> Sudah ada workaround di [`windows_git_fix.py`](../windows_git_fix.py) yang
-> otomatis dipakai `main.py`, `animal_detector.py`, dan `training/train.py`.
-> Kalau kamu training di komputer lain yang tidak kena bug ini, workaround
-> tersebut tidak mengganggu apa pun (aman dibiarkan).
-
----
-
-## 1. Siapkan data
-
-Kamu jawab "belum ada data sama sekali", jadi langkah paling realistis adalah
-**menggabungkan dataset publik** dari Roboflow Universe sebagai titik awal,
-lalu (opsional, sangat direkomendasikan) menambah foto asli dari sawah kamu
-supaya model lebih akurat di kondisi kamera & pencahayaan kamu sendiri.
-
-### 1a. Dataset publik (titik awal)
-
-Saya sudah cari kandidatnya, tapi **halaman Roboflow tidak bisa saya buka
-langsung untuk verifikasi isi/lisensinya** (diblokir untuk scraping) — jadi
-kamu perlu cek manual sebelum dipakai:
-
-- Walang sangit: https://universe.roboflow.com/ramadhan/walang-sangit
-  (dilaporkan ~600 gambar, kelas tunggal)
-- Wereng batang coklat + hama padi lain (multi-kelas, termasuk "Brown
-  Planthopper"): https://universe.roboflow.com/csu-bpvmi/paddy-rice-insect-pest-dataset
-- Ulat grayak — pelengkap dari fall armyworm (spesies serumpun, *Spodoptera*):
-  https://universe.roboflow.com/baltazar-mu/detection-of-fall-armyworm-infestation-with-deep-learning
-- Keong mas: https://universe.roboflow.com/demape-brayle-q/golden-apple-snail
-
-Cara pakai:
-
-1. Daftar akun gratis di https://roboflow.com (gratis, cukup email).
-2. Buka tiap link di atas → cek isi datasetnya masuk akal (foto jelas, label
-   benar, jumlah cukup) → klik **Download this Dataset** → format **YOLOv8**
-   → pilih **"show download code"** (jangan download zip manual).
-3. Roboflow akan menampilkan kode Python seperti ini — salin nilai
-   `workspace`, `project`, `version`, `api_key` ke
-   [`download_datasets.py`](download_datasets.py) (variabel `DATASETS`):
-
-   ```python
-   from roboflow import Roboflow
-   rf = Roboflow(api_key="XXXXXXXXXXXX")
-   project = rf.workspace("ramadhan").project("walang-sangit")
-   version = project.version(1)
-   dataset = version.download("yolov8")
-   ```
-
-4. Cek juga tab **"Classes"** di tiap project untuk tahu nama kelas persis
-   yang dipakai, sesuaikan `class_map` di `download_datasets.py` supaya
-   memetakan ke salah satu dari 5 slug target di atas. Kelas yang tidak ada
-   di `class_map` otomatis dibuang.
-
-5. (Opsional) Data tikus yang sekarang dipakai `best.pt` berasal dari project
-   Roboflow `rat-detection-6ezx2` (lihat `ROBOFLOW_MODEL_ID` di
-   [`animal_detector.py`](../animal_detector.py)) — kalau mau digabung juga,
-   tambahkan entrinya (ada template comment di `download_datasets.py`).
-
-### 1b. Foto asli dari sawah kamu (opsional, sangat disarankan)
-
-Dataset publik biasanya beda kondisi (angle kamera, pencahayaan, latar
-belakang) dari kamera sawah kamu sendiri, jadi model bisa kurang akurat di
-lapangan. Kalau sempat:
-
-1. Ambil video/foto tiap hama pakai kamera yang sama dengan yang dipakai
-   `main.py` nanti (webcam laptop / kamera lapangan), berbagai sudut & jarak.
-2. Label pakai [Roboflow Annotate](https://roboflow.com) (upload gambar,
-   gambar kotak, ekspor YOLOv8) — paling gampang, atau
-   [LabelImg](https://github.com/heartexlabs/labelImg) kalau mau offline.
-3. Taruh hasilnya (folder `images/` + `labels/` format YOLO) di
-   `training/dataset/train/` (atau `valid/`) mengikuti struktur yang sama
-   dengan hasil `download_datasets.py` — atau gabungkan manual sebelum
-   training.
-
----
-
-## 2. Install dependency training
+## Cara pakai (dataset & training sudah diverifikasi jalan)
 
 ```bash
 pip install -r training/requirements.txt
+python training/download_datasets.py     # ~3.477 gambar, ambil ROBOFLOW_API_KEY dari .env
+python training/train.py                 # default 100 epoch, ~ sesuaikan GPU kamu
+copy training\runs\sipetik_pest\weights\best.pt pest_local.pt
+python main.py
 ```
+
+Sudah saya jalankan langsung (bukan cuma ditulis) sampai tahap training
+1-epoch untuk pastikan pipeline-nya benar — hasilnya di bagian bawah.
+
+Kalau muncul `CUDA out of memory`, kecilkan batch: `python training/train.py --batch 4`.
 
 ---
 
-## 3. Unduh & gabungkan dataset
+## Sumber data (diverifikasi langsung lewat Roboflow SDK)
 
-Setelah `DATASETS` di `download_datasets.py` diisi & diverifikasi:
+**`csu-bpvmi/paddy-rice-insect-pest-dataset`, version 3** — satu-satunya
+sumber yang dipakai untuk kedua kelas ini:
 
-```bash
-python training/download_datasets.py
-```
+- 3.477 gambar (3.045 train / 289 valid / 143 test)
+- 7 kelas asli: `black bug`, `brown plant hopper`, `green leaf hopper`,
+  `rice bug`, `rice grasshopper`, `rice leaf roller`, `stem borer`
+- Dipetakan (lihat `class_map` di `download_datasets.py`):
+  - `brown plant hopper` → `wereng_coklat`
+  - `rice bug` → `walang_sangit` (*"rice bug"* = nama Inggris untuk walang
+    sangit, *Leptocorisa oratorius*)
+- 5 kelas lain otomatis dibuang saat digabung (tidak relevan untuk 2 kelas ini)
 
-Ini akan mengunduh tiap dataset, remap ke 5 kelas target SIPETIK, dan
-menggabungkannya ke `training/dataset/{train,valid,test}/{images,labels}`.
+Setelah digabung: **20.433 box** across train/valid/test untuk 2 kelas target.
 
----
+### Kenapa cuma 2 kelas (bukan 5)?
 
-## 4. Training
+Sempat dicoba cari sumber untuk kelas lain juga, hasil pengecekan langsung
+(pakai `project.versions()` di Roboflow SDK, bukan cuma baca deskripsi):
 
-```bash
-python training/train.py
-```
+| Kandidat | Hasil cek |
+|---|---|
+| `ramadhan/walang-sangit` (dataset khusus) | Ada 640 gambar berlabel, tapi **belum ada "version" yang di-publish** (`versions: []`) → tidak bisa didownload lewat API sampai pemiliknya generate version |
+| `sam-yu-gultom/citra-tanaman-padi-2` / `-3` (ada kelas persis "ulat grayak") | Sama — `versions: []`, tidak bisa didownload |
+| `demape-brayle-q/golden-apple-snail` | Bisa didownload, tapi cuma **15 label**, itu pun cuma telur (`GAS-eggs`), bukan keong dewasa — terlalu sedikit untuk training layak |
 
-GPU kamu (**GTX 1650, 4GB VRAM**) cukup untuk YOLOv8n dengan setting default
-(`batch=8`, `imgsz=640`). Kalau muncul error `CUDA out of memory`, kecilkan:
+Jadi ulat grayak & keong mas untuk sementara tetap lewat cloud (lihat
+`ZERO_SHOT_WORKFLOW` & `REMOTE_MODEL_IDS` di `main.py`). Kalau nanti salah
+satu dataset di atas sudah di-publish version-nya oleh pemiliknya, atau kamu
+foto sendiri (lihat bagian bawah), tinggal tambahkan ke `DATASETS` di
+`download_datasets.py` dan gabungkan ke `training/data.yaml`.
 
-```bash
-python training/train.py --batch 4
-```
-
-Perkiraan waktu: tergantung jumlah total gambar gabungan, tapi untuk beberapa
-ribu gambar biasanya beberapa jam di GTX 1650 (100 epoch, ada early-stopping
-lewat `--patience` jadi bisa berhenti lebih cepat kalau sudah tidak membaik).
-Progress bisa dipantau langsung di terminal, hasil ada di
-`training/runs/sipetik_pest/`.
-
----
-
-## 5. Pakai model barunya
-
-```bash
-copy best.pt best.rat-only.pt
-copy training\runs\sipetik_pest\weights\best.pt best.pt
-python main.py --model best.pt
-```
-
-Cek di jendela kamera: semua 5 kelas hama harusnya sudah kedeteksi. Label
-Indonesia di dashboard SIPETIK otomatis muncul benar karena
-`CameraController.php` sudah di-update untuk kelas-kelas ini.
+Tikus (`best.pt`) juga sengaja tidak disentuh — sumber data aslinya
+(`rat-detection-6ezx2` di `animal_detector.py`) workspace-nya tidak
+ditemukan lagi, dan modelnya sudah jalan baik, jadi tidak perlu diutak-atik.
 
 ---
 
-## 6. Kalau hasil deteksi kurang akurat
+## Hasil smoke-test (1 epoch, bukan model final)
 
-- Tambah lebih banyak foto asli dari sawah kamu (langkah 1b) — ini biasanya
-  paling berpengaruh, lebih dari sekadar nambah epoch.
-- Naikkan `--epochs` atau coba model dasar lebih besar (`--base yolov8s.pt`).
-- Turunkan `--conf` sedikit di `main.py` kalau model sering "ngeles" dari
-  hama yang jelas ada, atau naikkan kalau terlalu banyak salah deteksi
-  (false positive).
+Dijalankan langsung untuk pastikan pipeline-nya benar sebelum kamu training
+penuh (100 epoch) — angka di bawah **bukan model final**, tapi menunjukkan
+datanya sehat:
+
+```
+                Class   Images  Instances  Box(P    R    mAP50  mAP50-95)
+                  all      289       1081  0.922  0.933  0.966  0.575
+        wereng_coklat      250        500  0.911  1.000  0.995  0.672
+        walang_sangit      289        581  0.933  0.867  0.936  0.479
+```
+
+Training penuh (100 epoch, ada early-stopping) akan jauh lebih baik lagi —
+jalankan `python training/train.py` tanpa `--epochs` untuk itu.
+
+---
+
+## Bug lingkungan yang ditemukan & sudah diperbaiki
+
+- **`ultralytics` crash saat di-import** di komputer ini (`WinError 1337`),
+  gara-gara folder profil `AppData\Local\Packages` di-redirect ke
+  `D:\WpSystem\...` yang security descriptor-nya rusak. Workaround di
+  [`windows_git_fix.py`](../windows_git_fix.py), dipakai di `main.py`,
+  `animal_detector.py`, `train.py`, **dan `download_datasets.py`** (paket
+  `roboflow` ternyata juga import `ultralytics` secara internal, kena bug
+  yang sama pas proses akhir download).
+- **`ultralytics` resolve path dataset relatif ke folder `datasets_dir`
+  GLOBAL** (`C:\Users\<user>\AppData\Roaming\Ultralytics\settings.json`),
+  bukan ke lokasi `data.yaml` itu sendiri — di komputer ini settingnya
+  nyasar ke project lain sama sekali (`C:\xampp\htdocs\laravel\...`).
+  `train.py` sekarang generate `training/_data.resolved.yaml` (path
+  absolut, di-gitignore) saat runtime supaya tidak bergantung ke setting
+  global itu.
+- `model.train(..., exist_ok=True)` — supaya training ulang selalu menimpa
+  `training/runs/sipetik_pest/` yang sama, bukan numpuk jadi
+  `sipetik_pest-2`, `-3`, dst tiap kali dijalankan ulang.
+
+---
+
+## Kalau mau nambah data sendiri (rekomendasi jangka panjang)
+
+Dataset publik di atas kondisinya beda dari kamera sawah kamu (angle,
+pencahayaan, latar). Untuk akurasi terbaik, terutama buat ulat grayak &
+keong mas yang belum ada data lokal sama sekali:
+
+1. Ambil foto/video tiap hama pakai kamera yang sama dengan yang dipakai
+   `main.py` nanti, berbagai sudut & jarak.
+2. Label pakai [Roboflow Annotate](https://roboflow.com) (upload, gambar
+   kotak, ekspor YOLOv8) atau [LabelImg](https://github.com/heartexlabs/labelImg)
+   kalau mau offline.
+3. Taruh hasilnya (folder `images/` + `labels/` format YOLO) di
+   `training/dataset/train/` (atau `valid/`) mengikuti struktur yang sama
+   dengan hasil `download_datasets.py`, atau tambahkan sebagai entri baru
+   di `DATASETS` kalau datanya juga di-publish ke Roboflow.
+4. Update `training/data.yaml` (tambah kelas baru) dan
+   `CameraController::animalLabel()` di PHP supaya label Indonesia-nya ikut
+   muncul di dashboard.
