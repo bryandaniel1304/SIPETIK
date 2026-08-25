@@ -243,6 +243,41 @@ def draw_detection(frame, box, class_name, conf, source="local", is_human=False)
                 cv2.FONT_HERSHEY_SIMPLEX, 0.55, text_color, 2, cv2.LINE_AA)
 
 
+def box_overlap_ratio(box_a, box_b) -> float:
+    """IoU (intersection-over-union) antara 2 box xyxy, 0.0 kalau tidak overlap."""
+    ax1, ay1, ax2, ay2 = box_a
+    bx1, by1, bx2, by2 = box_b
+    ix1, iy1 = max(ax1, bx1), max(ay1, by1)
+    ix2, iy2 = min(ax2, bx2), min(ay2, by2)
+    inter = max(0, ix2 - ix1) * max(0, iy2 - iy1)
+    if inter <= 0:
+        return 0.0
+    area_a = max(0, ax2 - ax1) * max(0, ay2 - ay1)
+    area_b = max(0, bx2 - bx1) * max(0, by2 - by1)
+    union = area_a + area_b - inter
+    return inter / union if union > 0 else 0.0
+
+
+HUMAN_OVERLAP_SUPPRESS_IOU = 0.3  # box hama yg overlap segini besar dgn box
+                                   # manusia dianggap salah deteksi, dibuang
+
+
+def suppress_pests_overlapping_humans(detected_pests, detected_humans):
+    """Buang deteksi hama yang box-nya tumpang tindih signifikan dengan box
+    manusia yang sudah terkonfirmasi — model hama (terutama best.pt yang
+    cuma 1 kelas) kadang salah kira wajah/badan orang sebagai hama."""
+    if not detected_humans:
+        return detected_pests
+    human_boxes = [box for _, _, box in detected_humans]
+    kept = []
+    for raw_name, label, conf, box in detected_pests:
+        if any(box_overlap_ratio(box, hbox) >= HUMAN_OVERLAP_SUPPRESS_IOU
+               for hbox in human_boxes):
+            continue  # kemungkinan besar false-positive di wajah/badan manusia
+        kept.append((raw_name, label, conf, box))
+    return kept
+
+
 def passes_size_filter(frame, box, min_area, max_area):
     frame_h, frame_w = frame.shape[:2]
     x1, y1, x2, y2 = map(int, box)
@@ -538,6 +573,10 @@ def main():
                         detected_humans.append((label, conf, box))
                     else:
                         detected_pests.append((slug, label, conf, box))
+
+            # Buang deteksi hama yang box-nya nempel di box manusia (kemungkinan
+            # besar false-positive — lihat suppress_pests_overlapping_humans)
+            detected_pests = suppress_pests_overlapping_humans(detected_pests, detected_humans)
 
             # Gambar Bounding Box Manusia (Cyan/Biru - Aman)
             for label, conf, box in detected_humans:
