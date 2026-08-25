@@ -16,7 +16,7 @@
     ],
     "env": {
         "APP_ENV": "production",
-        "APP_DEBUG": "false",
+        "APP_DEBUG": "true",
         "VIEW_COMPILED_PATH": "/tmp",
         "APP_CONFIG_CACHE": "/tmp/config.php",
         "APP_EVENTS_CACHE": "/tmp/events.php",
@@ -28,6 +28,7 @@
         "SESSION_DRIVER": "cookie",
         "QUEUE_CONNECTION": "sync",
         "DB_CONNECTION": "pgsql",
-        "DB_SSLMODE": "require"
+        "DB_SSLMODE": "require",
+        "LOG_EMERGENCY_PATH": "/tmp/laravel-emergency.log"
     }
 }
