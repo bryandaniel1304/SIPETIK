@@ -19,6 +19,34 @@ docstring `main.py`).
 
 ---
 
+## ⚠️ PENTING — domain gap dataset (kenapa deteksi bisa "gagal" padahal modelnya OK)
+
+Dikonfirmasi lewat testing user + inspeksi langsung ke gambar training:
+**semua 3.477 gambar dataset ini adalah foto serangga MATI di atas papan
+perangkap lengket/light trap, dilihat dari atas, latar polos** — bukan
+serangga hidup di tanaman padi. Model yang dilatih dari data ini bisa
+sangat akurat untuk foto sejenis (mAP50 0.97/0.94, lihat hasil smoke-test
+di bawah), tapi **tidak otomatis bisa mengenali wereng/walang sangit hidup
+di kondisi lapangan** — background hijau daun, pose alami, sudut kamera
+bebas, dsb — apalagi kalau yang ditunjukkan ke kamera adalah foto di layar
+HP/laptop (nambah lapisan distorsi lagi: glare, moiré, kompresi ulang).
+
+Kalau kamu tunjukkan foto/wereng ke `main.py` dan tidak terdeteksi sama
+sekali, ini paling mungkin penyebabnya duluan sebelum dicurigai bug.
+**Cara cek cepat tanpa kamera:**
+
+```bash
+python training/test_image.py foto_kamu.jpg --conf 0.1
+```
+
+Kalau di confidence serendah 0.1 saja tetap nol deteksi, itu konfirmasi
+domain gap (bukan soal threshold) — solusinya di bagian "Kalau mau nambah
+data sendiri" di bawah: model perlu dilatih ulang dengan foto sejenis
+kondisi asli kamera kamu (wereng di daun, live, dari sudut kamera nyata),
+bukan cuma menambah epoch atau menurunkan `--conf`.
+
+---
+
 ## Cara pakai (dataset & training sudah diverifikasi jalan)
 
 ```bash
