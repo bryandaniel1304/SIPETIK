@@ -9,6 +9,12 @@ tambahkan data hasil labeling manual sendiri).
     python training/train.py --epochs 120 --batch 16
     python training/train.py --base yolov8s.pt   # model lebih besar, lebih akurat, lebih lambat
 
+Kalau training keputus di tengah jalan (laptop dimatikan, listrik mati,
+dll) — TIDAK perlu mulai dari awal lagi. Ultralytics otomatis simpan
+checkpoint (last.pt) tiap epoch selesai. Lanjutkan dengan:
+
+    python training/train.py --resume
+
 Progress & hasil training bisa dipantau di training/runs/sipetik_pest/.
 Setelah selesai, weights terbaik ada di:
     training/runs/sipetik_pest/weights/best.pt
@@ -54,43 +60,64 @@ def parse_args():
     p.add_argument("--patience", type=int, default=25,
                     help="Stop lebih awal kalau tidak ada perbaikan selama N epoch")
     p.add_argument("--device",  default="0", help="'0' = GPU pertama, 'cpu' = paksa CPU")
+    p.add_argument("--resume", action="store_true",
+                    help="Lanjutkan training yang terputus dari checkpoint terakhir "
+                         "(training/runs/sipetik_pest/weights/last.pt) — abaikan opsi lain di atas")
     return p.parse_args()
 
 
 def main():
     args = parse_args()
 
-    if not DATASET_DIR.exists():
-        print(f"ERROR: {DATASET_DIR} belum ada.")
-        print("Jalankan dulu: python training/download_datasets.py")
-        print("(atau isi manual mengikuti struktur di training/README.md)")
-        sys.exit(1)
+    last_checkpoint = TRAINING_DIR / "runs" / "sipetik_pest" / "weights" / "last.pt"
 
-    print("=" * 60)
-    print("  SIPETIK — Training Model Hama Sawah")
-    print("=" * 60)
-    print(f"  Model dasar : {args.base}")
-    print(f"  Dataset     : {DATASET_DIR}")
-    print(f"  Epochs      : {args.epochs}")
-    print(f"  Image size  : {args.imgsz}")
-    print(f"  Batch size  : {args.batch}")
-    print(f"  Device      : {args.device}")
-    print("=" * 60)
-    print()
+    if args.resume:
+        if not last_checkpoint.exists():
+            print(f"ERROR: {last_checkpoint} tidak ditemukan — tidak ada training")
+            print("sebelumnya yang bisa dilanjutkan. Jalankan tanpa --resume dulu.")
+            sys.exit(1)
 
-    model = YOLO(args.base)
-    model.train(
-        data     = str(resolve_data_yaml()),
-        epochs   = args.epochs,
-        imgsz    = args.imgsz,
-        batch    = args.batch,
-        patience = args.patience,
-        device   = args.device,
-        project  = str(TRAINING_DIR / "runs"),
-        name     = "sipetik_pest",
-        exist_ok = True,  # selalu timpa training/runs/sipetik_pest/ (bukan
-                           # numpuk sipetik_pest-2, -3, ... tiap run ulang)
-    )
+        print("=" * 60)
+        print("  SIPETIK — Lanjutkan Training yang Terputus")
+        print("=" * 60)
+        print(f"  Checkpoint : {last_checkpoint}")
+        print("=" * 60)
+        print()
+
+        model = YOLO(str(last_checkpoint))
+        model.train(resume=True)  # epoch, data, batch, dll otomatis dibaca dari checkpoint
+    else:
+        if not DATASET_DIR.exists():
+            print(f"ERROR: {DATASET_DIR} belum ada.")
+            print("Jalankan dulu: python training/download_datasets.py")
+            print("(atau isi manual mengikuti struktur di training/README.md)")
+            sys.exit(1)
+
+        print("=" * 60)
+        print("  SIPETIK — Training Model Hama Sawah")
+        print("=" * 60)
+        print(f"  Model dasar : {args.base}")
+        print(f"  Dataset     : {DATASET_DIR}")
+        print(f"  Epochs      : {args.epochs}")
+        print(f"  Image size  : {args.imgsz}")
+        print(f"  Batch size  : {args.batch}")
+        print(f"  Device      : {args.device}")
+        print("=" * 60)
+        print()
+
+        model = YOLO(args.base)
+        model.train(
+            data     = str(resolve_data_yaml()),
+            epochs   = args.epochs,
+            imgsz    = args.imgsz,
+            batch    = args.batch,
+            patience = args.patience,
+            device   = args.device,
+            project  = str(TRAINING_DIR / "runs"),
+            name     = "sipetik_pest",
+            exist_ok = True,  # selalu timpa training/runs/sipetik_pest/ (bukan
+                               # numpuk sipetik_pest-2, -3, ... tiap run ulang)
+        )
 
     best_weights = TRAINING_DIR / "runs" / "sipetik_pest" / "weights" / "best.pt"
     print()

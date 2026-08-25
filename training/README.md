@@ -66,6 +66,30 @@ copy training\runs\sipetik_pest\weights\best.pt pest_local.pt
 python main.py
 ```
 
+### Kalau training harus dihentikan di tengah jalan (laptop mau dimatikan, dll)
+
+Ultralytics otomatis simpan checkpoint (`last.pt`) tiap epoch selesai —
+**tidak perlu mulai dari epoch 0 lagi**. Tapi cara berhentinya penting:
+
+- **Aman:** tekan `Ctrl+C` sekali di terminal yang menjalankan `train.py`
+  saat SEDANG di tengah training, atau tutup laptop wajar (sleep/hibernate) —
+  proses akan selesaikan penulisan checkpoint yang sedang berjalan dulu.
+- **Hindari:** mematikan paksa (shutdown/cabut daya) tepat saat checkpoint
+  lagi ditulis — file `last.pt` bisa korup separuh jalan. Kalau harus
+  mematikan di jam tertentu, hentikan trainingnya (`Ctrl+C`) beberapa menit
+  *sebelum* jam itu, jangan mepet — 1 epoch di sini butuh ~5 menit, kasih
+  jeda aman.
+
+Untuk lanjut lagi kapan saja (laptop baru dinyalakan lagi, dll):
+
+```bash
+python training/train.py --resume
+```
+
+Ini otomatis baca `training/runs/sipetik_pest/weights/last.pt` dan
+melanjutkan dari epoch terakhir yang tersimpan (bukan restart dari 0),
+termasuk sisa target epoch & early-stopping counter-nya.
+
 Sudah saya jalankan langsung (bukan cuma ditulis) sampai tahap training
 beneran (smoke-test 1 & 3 epoch) untuk pastikan pipeline-nya benar dan
 hasilnya nyata membaik ke foto natural — hasilnya di bagian bawah.
