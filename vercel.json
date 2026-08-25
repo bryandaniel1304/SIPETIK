@@ -30,6 +30,8 @@
         "DB_CONNECTION": "pgsql",
         "DB_SSLMODE": "require",
         "LOG_EMERGENCY_PATH": "/tmp/laravel-emergency.log",
-        "BROADCAST_CONNECTION": "log"
+        "BROADCAST_CONNECTION": "log",
+        "MAIL_MAILER": "log",
+        "FILESYSTEM_DISK": "local"
     }
 }
