@@ -29,6 +29,7 @@
         "QUEUE_CONNECTION": "sync",
         "DB_CONNECTION": "pgsql",
         "DB_SSLMODE": "require",
-        "LOG_EMERGENCY_PATH": "/tmp/laravel-emergency.log"
+        "LOG_EMERGENCY_PATH": "/tmp/laravel-emergency.log",
+        "BROADCAST_CONNECTION": "log"
     }
 }
