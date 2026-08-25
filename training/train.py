@@ -59,6 +59,11 @@ def parse_args():
                     help="Kecilkan (mis. 4) kalau GPU kehabisan memori (CUDA OOM)")
     p.add_argument("--patience", type=int, default=25,
                     help="Stop lebih awal kalau tidak ada perbaikan selama N epoch")
+    p.add_argument("--cache", choices=["disk", "ram", "none"], default="disk",
+                    help="Cache gambar setelah didecode sekali supaya epoch berikutnya "
+                         "tidak decode JPEG ulang dari awal. 'disk' aman untuk RAM "
+                         "terbatas (default), 'ram' lebih cepat tapi butuh RAM bebas "
+                         "banyak, 'none' matikan caching (setting lama)")
     p.add_argument("--device",  default="0", help="'0' = GPU pertama, 'cpu' = paksa CPU")
     p.add_argument("--resume", action="store_true",
                     help="Lanjutkan training yang terputus dari checkpoint terakhir "
@@ -102,6 +107,7 @@ def main():
         print(f"  Image size  : {args.imgsz}")
         print(f"  Batch size  : {args.batch}")
         print(f"  Device      : {args.device}")
+        print(f"  Cache       : {args.cache}")
         print("=" * 60)
         print()
 
@@ -113,6 +119,7 @@ def main():
             batch    = args.batch,
             patience = args.patience,
             device   = args.device,
+            cache    = False if args.cache == "none" else args.cache,
             project  = str(TRAINING_DIR / "runs"),
             name     = "sipetik_pest",
             exist_ok = True,  # selalu timpa training/runs/sipetik_pest/ (bukan
