@@ -19,31 +19,40 @@ docstring `main.py`).
 
 ---
 
-## ⚠️ PENTING — domain gap dataset (kenapa deteksi bisa "gagal" padahal modelnya OK)
+## ⚠️ Riwayat domain gap dataset (sudah ditangani, tapi baca ini dulu)
 
-Dikonfirmasi lewat testing user + inspeksi langsung ke gambar training:
-**semua 3.477 gambar dataset ini adalah foto serangga MATI di atas papan
-perangkap lengket/light trap, dilihat dari atas, latar polos** — bukan
-serangga hidup di tanaman padi. Model yang dilatih dari data ini bisa
-sangat akurat untuk foto sejenis (mAP50 0.97/0.94, lihat hasil smoke-test
-di bawah), tapi **tidak otomatis bisa mengenali wereng/walang sangit hidup
-di kondisi lapangan** — background hijau daun, pose alami, sudut kamera
-bebas, dsb — apalagi kalau yang ditunjukkan ke kamera adalah foto di layar
-HP/laptop (nambah lapisan distorsi lagi: glare, moiré, kompresi ulang).
+**Masalah yang ditemukan (v1):** dataset awal (`csu-bpvmi`) isinya foto
+serangga MATI di papan perangkap, latar polos, dilihat dari atas. User tes
+tunjukkan foto wereng di layar HP ke `main.py` → **tidak terdeteksi sama
+sekali**. Dicek pakai `training/test_image.py --conf 0.1`: tetap nol —
+konfirmasi model belum pernah lihat konteks itu, bukan soal threshold.
 
-Kalau kamu tunjukkan foto/wereng ke `main.py` dan tidak terdeteksi sama
-sekali, ini paling mungkin penyebabnya duluan sebelum dicurigai bug.
-**Cara cek cepat tanpa kamera:**
+**Perbaikan (v2 — kondisi sekarang):** ditambahkan dataset kedua
+(`data-science-project/common-rice-pests-philippines`, 5.229 gambar) yang
+berisi foto natural serangga di tanaman padi (sudah dicek visual langsung,
+bukan cuma baca deskripsi). Setelah digabung & training ulang (3 epoch
+smoke-test):
+
+- Sebelumnya: foto natural wereng → **0 deteksi**, foto dari user →
+  **box nyasar** (bukan di serangganya, cuma noise confidence 30%)
+- Sekarang: foto natural wereng & walang sangit (belum pernah dilihat model)
+  → **box tepat di serangganya**, confidence 26–41% (lihat hasil lengkap di
+  bagian "Hasil smoke-test" di bawah)
+
+Confidence-nya masih rendah karena baru 3 epoch (bukan training penuh) —
+kalau kamu jalankan `python training/train.py` sampai selesai (100 epoch,
+early-stopping otomatis), confidence-nya akan naik jauh lebih baik lagi.
+
+**Cara cek cepat tanpa kamera** (masih berlaku, sekarang buat validasi
+model baru):
 
 ```bash
 python training/test_image.py foto_kamu.jpg --conf 0.1
 ```
 
-Kalau di confidence serendah 0.1 saja tetap nol deteksi, itu konfirmasi
-domain gap (bukan soal threshold) — solusinya di bagian "Kalau mau nambah
-data sendiri" di bawah: model perlu dilatih ulang dengan foto sejenis
-kondisi asli kamera kamu (wereng di daun, live, dari sudut kamera nyata),
-bukan cuma menambah epoch atau menurunkan `--conf`.
+Kalau masih nol di confidence serendah ini, kemungkinan foto kamu beda
+konteks lagi (mis. sudut/spesies yang belum ada di kedua dataset) — tambah
+foto sejenis itu sendiri (lihat bagian "Kalau mau nambah data sendiri").
 
 ---
 
@@ -51,34 +60,44 @@ bukan cuma menambah epoch atau menurunkan `--conf`.
 
 ```bash
 pip install -r training/requirements.txt
-python training/download_datasets.py     # ~3.477 gambar, ambil ROBOFLOW_API_KEY dari .env
+python training/download_datasets.py     # ~8.700 gambar (2 dataset), ambil ROBOFLOW_API_KEY dari .env
 python training/train.py                 # default 100 epoch, ~ sesuaikan GPU kamu
 copy training\runs\sipetik_pest\weights\best.pt pest_local.pt
 python main.py
 ```
 
 Sudah saya jalankan langsung (bukan cuma ditulis) sampai tahap training
-1-epoch untuk pastikan pipeline-nya benar — hasilnya di bagian bawah.
+beneran (smoke-test 1 & 3 epoch) untuk pastikan pipeline-nya benar dan
+hasilnya nyata membaik ke foto natural — hasilnya di bagian bawah.
 
 Kalau muncul `CUDA out of memory`, kecilkan batch: `python training/train.py --batch 4`.
 
 ---
 
-## Sumber data (diverifikasi langsung lewat Roboflow SDK)
+## Sumber data (diverifikasi langsung lewat Roboflow SDK, 2 dataset digabung)
 
-**`csu-bpvmi/paddy-rice-insect-pest-dataset`, version 3** — satu-satunya
-sumber yang dipakai untuk kedua kelas ini:
+**1. `csu-bpvmi/paddy-rice-insect-pest-dataset`, version 3** — gaya TRAP:
 
 - 3.477 gambar (3.045 train / 289 valid / 143 test)
 - 7 kelas asli: `black bug`, `brown plant hopper`, `green leaf hopper`,
   `rice bug`, `rice grasshopper`, `rice leaf roller`, `stem borer`
-- Dipetakan (lihat `class_map` di `download_datasets.py`):
-  - `brown plant hopper` → `wereng_coklat`
-  - `rice bug` → `walang_sangit` (*"rice bug"* = nama Inggris untuk walang
-    sangit, *Leptocorisa oratorius*)
-- 5 kelas lain otomatis dibuang saat digabung (tidak relevan untuk 2 kelas ini)
+- `brown plant hopper` → `wereng_coklat`, `rice bug` → `walang_sangit`
+  (*"rice bug"* = nama Inggris untuk walang sangit, *Leptocorisa oratorius*)
 
-Setelah digabung: **20.433 box** across train/valid/test untuk 2 kelas target.
+**2. `data-science-project/common-rice-pests-philippines`, version 11** —
+campuran foto NATURAL di tanaman + sebagian spesimen latar putih (dicek
+visual langsung):
+
+- 5.229 gambar (4.178 train / 546 valid / 505 test)
+- 6 kelas asli: `brown-planthopper`, `green-leafhopper`, `leaf-folder`,
+  `rice-bug`, `stem-borer`, `whorl-maggot`
+- `brown-planthopper` → `wereng_coklat`, `rice-bug` → `walang_sangit`
+- Sebagian anotasinya polygon (bukan box biasa) — ultralytics otomatis
+  convert ke bounding box saat training, sudah dites jalan normal
+
+Kelas lain di kedua dataset otomatis dibuang saat digabung (tidak relevan
+untuk 2 kelas target). Setelah digabung: **train 7.223 gambar** (3.045 +
+4.178), total 22.812 box target di seluruh split (train+valid+test).
 
 ### Kenapa cuma 2 kelas (bukan 5)?
 
@@ -103,11 +122,9 @@ ditemukan lagi, dan modelnya sudah jalan baik, jadi tidak perlu diutak-atik.
 
 ---
 
-## Hasil smoke-test (1 epoch, bukan model final)
+## Hasil smoke-test (bukan model final — training penuh akan lebih baik)
 
-Dijalankan langsung untuk pastikan pipeline-nya benar sebelum kamu training
-penuh (100 epoch) — angka di bawah **bukan model final**, tapi menunjukkan
-datanya sehat:
+**v1 — cuma dataset trap (1 epoch):**
 
 ```
                 Class   Images  Instances  Box(P    R    mAP50  mAP50-95)
@@ -116,8 +133,31 @@ datanya sehat:
         walang_sangit      289        581  0.933  0.867  0.936  0.479
 ```
 
+Angka mAP50 tinggi, tapi cuma diuji ke gambar trap-style yang mirip
+training. Waktu dicoba ke foto natural sungguhan → nol deteksi (lihat
+riwayat domain gap di atas).
+
+**v2 — trap + natural digabung (3 epoch):**
+
+```
+                Class   Images  Instances  Box(P    R    mAP50  mAP50-95)
+                  all      835       1381  0.948  0.878  0.940  0.577
+        wereng_coklat      329        669  0.968  0.825  0.925  0.619
+        walang_sangit      388        712  0.928  0.930  0.954  0.535
+```
+
+mAP50 turun sedikit (0.94 vs 0.97) — **ini wajar dan bagus**, karena
+validation set-nya sekarang campuran trap+natural yang jauh lebih sulit,
+bukan cuma trap yang gampang. Dites langsung ke foto natural yang belum
+pernah dilihat model (bukan bagian training): box-nya sekarang **tepat di
+serangganya** dengan spesies benar, confidence 26–41% — dibanding v1 yang
+sama sekali nol. Confidence masih akan naik banyak dengan training penuh
+(100 epoch vs baru 3 di sini).
+
 Training penuh (100 epoch, ada early-stopping) akan jauh lebih baik lagi —
-jalankan `python training/train.py` tanpa `--epochs` untuk itu.
+jalankan `python training/train.py` tanpa `--epochs` untuk itu, lalu
+validasi lagi pakai `training/test_image.py` ke foto kondisi kamera kamu
+sendiri.
 
 ---
 

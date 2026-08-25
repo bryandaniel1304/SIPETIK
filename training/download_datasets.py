@@ -3,17 +3,27 @@
 SIPETIK — Unduh & siapkan dataset lokal untuk wereng batang coklat + walang
 sangit (2 kelas — lihat training/data.yaml untuk kenapa cuma 2, bukan 5).
 
-Sumbernya SUDAH DIVERIFIKASI langsung lewat Roboflow SDK (bukan tebakan):
+Sumbernya SUDAH DIVERIFIKASI langsung lewat Roboflow SDK (bukan tebakan),
+2 dataset digabung supaya model kenal 2 gaya foto sekaligus (trap-style
+DAN foto natural di tanaman — lihat catatan domain gap di training/README.md
+soal kenapa ini penting):
 
-    csu-bpvmi/paddy-rice-insect-pest-dataset, version 3
-    -> 3.477 gambar (3045 train / 289 valid / 143 test)
-    -> kelas "brown plant hopper"  -> wereng_coklat
-    -> kelas "rice bug"            -> walang_sangit
-       ("rice bug" = nama Inggris untuk walang sangit / Leptocorisa oratorius)
+    1. csu-bpvmi/paddy-rice-insect-pest-dataset, version 3
+       -> 3.477 gambar, gaya TRAP (serangga di papan perangkap, latar polos)
+       -> "brown plant hopper" -> wereng_coklat, "rice bug" -> walang_sangit
 
-Kelas lain di dataset ini (rice grasshopper, black bug, stem borer, green
-leaf hopper, rice leaf roller) otomatis dibuang karena tidak ada di
-TARGET_CLASSES di bawah.
+    2. data-science-project/common-rice-pests-philippines, version 11
+       -> 5.229 gambar, campuran foto NATURAL di tanaman + beberapa spesimen
+          latar putih (dicek visual langsung, bukan cuma baca deskripsi)
+       -> "brown-planthopper" -> wereng_coklat, "rice-bug" -> walang_sangit
+       -> sebagian anotasinya polygon bukan box biasa — ultralytics otomatis
+          convert ke bounding box saat training, sudah dites jalan
+
+("rice bug" = nama Inggris untuk walang sangit / Leptocorisa oratorius)
+
+Kelas lain di kedua dataset ini (rice grasshopper, black bug, stem borer,
+green leaf hopper, rice leaf roller, leaf-folder, whorl-maggot) otomatis
+dibuang karena tidak ada di TARGET_CLASSES di bawah.
 
 Sebelum jalan:
     1. Isi ROBOFLOW_API_KEY di .env (sudah ada kalau ikut setup sebelumnya)
@@ -60,6 +70,15 @@ DATASETS = [
         "class_map": {
             "brown plant hopper": "wereng_coklat",
             "rice bug":           "walang_sangit",
+        },
+    },
+    {
+        "workspace": "data-science-project",
+        "project":   "common-rice-pests-philippines",
+        "version":   11,
+        "class_map": {
+            "brown-planthopper": "wereng_coklat",
+            "rice-bug":          "walang_sangit",
         },
     },
 ]
