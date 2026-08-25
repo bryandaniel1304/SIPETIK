@@ -26,22 +26,46 @@ serverless function, and route every non-static request to it.
 
 ## Required manual setup (can't be done from the repo alone)
 
-### 1. A cloud-reachable MySQL database
-`DB_HOST=127.0.0.1` only exists on your own machine. Vercel's functions run
-in the cloud and need a MySQL database reachable over the internet (e.g.
-Railway, Aiven, Amazon RDS, DigitalOcean Managed MySQL, PlanetScale/Turso if
-you switch driver, etc — any managed MySQL with a public/SSL endpoint works).
-Once you have one:
-- Set `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`,
-  `DB_PASSWORD` (and `DB_SSLMODE`/CA cert options if your provider requires
-  TLS) as **Environment Variables in the Vercel Project Settings** — never
-  commit real DB credentials to `vercel.json` or `.env`.
-- Run migrations once against that database from your machine:
-  point your local `.env` at the cloud DB temporarily and run
+### 1. A Supabase (Postgres) database
+`DB_HOST=127.0.0.1` only exists on your own machine. We're using
+[Supabase](https://supabase.com) for the cloud database — it's Postgres, and
+Laravel already ships a ready `pgsql` connection in `config/database.php`.
+The migrations in this project use Laravel's schema builder in a portable
+way (checked — no raw MySQL-specific SQL), so nothing else needs to change
+for the switch from MySQL to Postgres.
+
+`vercel.json`'s `env` block already sets `DB_CONNECTION=pgsql` and
+`DB_SSLMODE=require` (Supabase requires TLS). What's still needed:
+
+- Create a Supabase project (any region close to your users — e.g.
+  Southeast Asia/Singapore — is fine; it doesn't need to match Vercel's
+  region).
+- In the project's **Connect** dialog, use the **Session pooler**
+  connection details (port 5432, IPv4) — not the Direct connection (IPv6
+  only by default, often unreachable from serverless platforms) and not the
+  Transaction pooler for now. The Session pooler behaves like a normal
+  Postgres connection, so Laravel's default prepared-statement handling
+  works without extra packages. If you outgrow the Session pooler's
+  connection ceiling later, the Transaction pooler (port 6543) offers more
+  headroom for serverless, but PgBouncer's transaction mode doesn't support
+  prepared statements — you'd need a compatibility package (e.g.
+  `vermaysha/pgbouncer-laravel-extension`, currently beta) or to set
+  `PDO::ATTR_EMULATE_PREPARES => true` on the `pgsql` connection's
+  `options` in `config/database.php` first.
+- Set `DB_HOST`, `DB_PORT` (5432), `DB_DATABASE` (usually `postgres`),
+  `DB_USERNAME`, `DB_PASSWORD` from that connection string as **Environment
+  Variables in the Vercel Project Settings** — never commit real DB
+  credentials to `vercel.json` or `.env`.
+- Run migrations once against that database from your machine: point your
+  local `.env` at the Supabase connection temporarily and run
   `php artisan migrate --force` (or `vercel env pull` if you use the Vercel
   CLI, then migrate). Vercel's build step intentionally does **not** run
   migrations automatically — that would risk running them against
   production on every push, including preview deployments.
+
+Bonus: Supabase Storage also exposes an S3-compatible API, so it can double
+as the persistent image storage mentioned in step 3 below — one provider
+instead of two.
 
 ### 2. `APP_KEY` and other secrets, as Vercel Environment Variables
 Generate one with `php artisan key:generate --show` and add it (and
@@ -76,7 +100,7 @@ automatically without a separate always-on worker (Vercel can't run one).
 
 ## Deploy steps, in order
 
-1. Provision the cloud MySQL DB and run migrations against it once.
+1. Create the Supabase project and run migrations against it once (Session pooler connection).
 2. Add all secrets (`APP_KEY`, `DB_*`, API keys) in Vercel → Environment
    Variables (Production, and Preview if you want preview deploys to work
    too).
