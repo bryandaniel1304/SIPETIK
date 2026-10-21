@@ -72,6 +72,8 @@ Route::get('/api/esp32/command', [BuzzerControlController::class, 'getCommand'])
 
 // Camera animal detection — called by Python script on laptop (no CSRF)
 Route::post('/api/camera/motion',    [CameraController::class, 'motion'])->withoutMiddleware([ValidateCsrfToken::class, App\Http\Middleware\VerifyCsrfToken::class]);
+// Penyakit daun padi — hanya peringatan di dashboard, TIDAK membunyikan buzzer
+Route::post('/api/camera/disease',   [CameraController::class, 'disease'])->withoutMiddleware([ValidateCsrfToken::class, App\Http\Middleware\VerifyCsrfToken::class]);
 Route::get('/api/camera/heartbeat',  [CameraController::class, 'heartbeat']);
 Route::get('/api/camera/status',     [CameraController::class, 'status']);
 

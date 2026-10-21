@@ -33,3 +33,13 @@ __pycache__/
 /training/_downloads
 /training/runs
 /training/_data.resolved.yaml
+/training/dataset_v2
+# Engine TensorRT khusus per-GPU, dibangun ulang otomatis oleh benchmark_gpu.py --trt
+/training/benchmarks/engines
+/weights/engines
+
+# Local/private files kept out of the repo
+/_to_delete/
+/.claude/
+/foto_kamu.jpg
+/foto_kamu.detected.jpg

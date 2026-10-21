@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 """
-SIPETIK — Unduh & siapkan dataset lokal untuk wereng batang coklat + walang
-sangit (2 kelas — lihat training/data.yaml untuk kenapa cuma 2, bukan 5).
+SIPETIK — Unduh & siapkan dataset lokal untuk wereng batang coklat +
+walang sangit + keong mas (telur) — 3 kelas, lihat training/data.yaml.
 
-Sumbernya SUDAH DIVERIFIKASI langsung lewat Roboflow SDK (bukan tebakan),
-2 dataset digabung supaya model kenal 2 gaya foto sekaligus (trap-style
-DAN foto natural di tanaman — lihat catatan domain gap di training/README.md
-soal kenapa ini penting):
+Sumbernya SUDAH DIVERIFIKASI langsung lewat Roboflow SDK (bukan tebakan):
 
     1. csu-bpvmi/paddy-rice-insect-pest-dataset, version 3
        -> 3.477 gambar, gaya TRAP (serangga di papan perangkap, latar polos)
@@ -19,9 +16,18 @@ soal kenapa ini penting):
        -> sebagian anotasinya polygon bukan box biasa — ultralytics otomatis
           convert ke bounding box saat training, sudah dites jalan
 
+    3. rex-sham-zx8pq/apple-snail-eggs, version 15
+       -> 2.698 gambar train, foto NATURAL asli (nama file "IMG_2022...",
+          jelas dari HP di lapangan — dicek visual langsung: gerombolan
+          telur pink di batu/batang dekat air)
+       -> "applesnail-eggs" & "applesnail-eggs-reflections" -> keong_mas
+       -> Ini mendeteksi TELUR keong mas (penanda infestasi paling gampang
+          dikenali), BUKAN keong dewasa — belum ada dataset publik yang
+          layak untuk keong dewasa (lihat training/README.md)
+
 ("rice bug" = nama Inggris untuk walang sangit / Leptocorisa oratorius)
 
-Kelas lain di kedua dataset ini (rice grasshopper, black bug, stem borer,
+Kelas lain di dataset 1 & 2 (rice grasshopper, black bug, stem borer,
 green leaf hopper, rice leaf roller, leaf-folder, whorl-maggot) otomatis
 dibuang karena tidak ada di TARGET_CLASSES di bawah.
 
@@ -60,7 +66,7 @@ MERGED_DIR   = TRAINING_DIR / "dataset"
 TMP_DIR      = TRAINING_DIR / "_downloads"
 
 # Urutan kelas — HARUS sama persis dengan training/data.yaml
-TARGET_CLASSES = ["wereng_coklat", "walang_sangit"]
+TARGET_CLASSES = ["wereng_coklat", "walang_sangit", "keong_mas"]
 
 DATASETS = [
     {
@@ -79,6 +85,15 @@ DATASETS = [
         "class_map": {
             "brown-planthopper": "wereng_coklat",
             "rice-bug":          "walang_sangit",
+        },
+    },
+    {
+        "workspace": "rex-sham-zx8pq",
+        "project":   "apple-snail-eggs",
+        "version":   15,
+        "class_map": {
+            "applesnail-eggs":             "keong_mas",
+            "applesnail-eggs-reflections": "keong_mas",
         },
     },
 ]

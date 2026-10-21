@@ -83,6 +83,32 @@ class CameraController extends Controller
     }
 
     /**
+     * Penyakit daun padi dari model disease_v1.pt (main.py).
+     * Sengaja TIDAK menyentuh buzzer: buzzer untuk mengusir hewan, penyakit
+     * butuh tindakan petani. Disimpan 30 menit untuk ditampilkan dashboard.
+     */
+    public function disease(Request $request): JsonResponse
+    {
+        $request->validate([
+            'disease_class' => 'required|string|max:50',
+            'confidence'    => 'nullable|numeric|min:0|max:1',
+            'device_id'     => 'nullable|string|max:100',
+        ]);
+
+        $class = $request->input('disease_class');
+        $data  = [
+            'disease_class' => $class,
+            'disease_label' => $this->diseaseLabel($class),
+            'confidence'    => (float) $request->input('confidence', 0.0),
+            'device_id'     => $request->input('device_id', 'laptop-camera'),
+            'detected_at'   => now()->toIso8601String(),
+        ];
+        Cache::put('camera_last_disease', $data, now()->addMinutes(30));
+
+        return response()->json(['status' => 'ok'] + $data);
+    }
+
+    /**
      * Periodic heartbeat from Python script to signal it is running.
      * Cache TTL = 60s — if no heartbeat for 60s, camera shown as offline.
      */
@@ -103,6 +129,12 @@ class CameraController extends Controller
     {
         $heartbeat = Cache::get('camera_heartbeat');
         $detection = Cache::get('camera_last_detection');
+        $disease   = Cache::get('camera_last_disease');
+        if ($disease && isset($disease['detected_at'])) {
+            $disease['detected_human'] = \Carbon\Carbon::parse($disease['detected_at'])
+                ->timezone('Asia/Jakarta')
+                ->diffForHumans();
+        }
 
         // Refresh human-readable time on each poll
         if ($detection && isset($detection['detected_at'])) {
@@ -116,6 +148,7 @@ class CameraController extends Controller
             'device_id'      => $heartbeat['device_id'] ?? null,
             'last_heartbeat' => $heartbeat['at'] ?? null,
             'detection'      => $detection,
+            'disease'        => $disease,
         ]);
     }
 
@@ -139,12 +172,25 @@ class CameraController extends Controller
         return false;
     }
 
+    private function diseaseLabel(string $class): string
+    {
+        return match ($class) {
+            'blas_daun'            => 'Blas Daun',
+            'hawar_daun_bakteri'   => 'Hawar Daun Bakteri',
+            'bercak_coklat'        => 'Bercak Coklat',
+            'bercak_coklat_sempit' => 'Bercak Coklat Sempit',
+            'hangus_daun'          => 'Hangus Daun',
+            'gosong_daun'          => 'Gosong Daun',
+            default                => ucfirst(str_replace(['_', '-'], ' ', $class)),
+        };
+    }
+
     private function animalLabel(?string $class): string
     {
         return match ($class) {
             null, '', 'none' => '-',
 
-            // Hama sawah — kelas custom model SIPETIK (best.pt)
+            // Hama sawah — kelas custom model SIPETIK (pest_v3.pt / best.pt)
             'rat', 'tikus'                    => 'Tikus',
             'walang_sangit', 'walang-sangit'  => 'Walang Sangit',
             'wereng_coklat', 'wereng-coklat',
@@ -153,6 +199,14 @@ class CameraController extends Controller
             'armyworm'                         => 'Ulat Grayak',
             'keong_mas', 'keong-mas',
             'golden_apple_snail'               => 'Keong Mas',
+
+            // Kelas tambahan model lokal pest_v2.pt / pest_v3.pt
+            'wereng_hijau'                     => 'Wereng Hijau',
+            'penggulung_daun'                  => 'Penggulung Daun',
+            'penggerek_batang'                 => 'Penggerek Batang',
+            'kepinding_hitam'                  => 'Kepinding Hitam',
+            'belalang_padi'                    => 'Belalang Padi',
+            'lalat_bibit'                      => 'Lalat Bibit',
 
             // Fallback — kelas bawaan COCO (dipakai bila best.pt tidak
             // ditemukan dan script jatuh balik ke yolov8n.pt)

@@ -1,21 +1,27 @@
 # SIPETIK — dataset config untuk model lokal TAMBAHAN (wereng batang coklat
-# + walang sangit). Tikus tetap dideteksi oleh best.pt yang sudah ada
-# (terpisah, tidak digabung — sumber data training tikus yang asli sudah
-# tidak diketahui workspace-nya, jadi tidak diutak-atik supaya tidak rusak).
+# + walang sangit + keong mas [telur]). Tikus tetap dideteksi oleh best.pt
+# yang sudah ada (terpisah, tidak digabung — sumber data training tikus
+# yang asli sudah tidak diketahui workspace-nya, jadi tidak diutak-atik
+# supaya tidak rusak).
 #
 # Model hasil training file ini dipakai sebagai model LOKAL KEDUA di
 # main.py (lihat PEST_LOCAL_MODEL_PATH), bukan menggantikan best.pt.
 #
-# Ulat grayak & keong mas TIDAK ada di sini — datanya belum cukup untuk
-# training lokal yang layak (lihat training/README.md), jadi untuk
-# sementara tetap dideteksi lewat Roboflow API (mode cloud di main.py).
+# Keong mas di sini mendeteksi TELUR (gerombolan pink/merah muda di batang
+# padi/batu dekat air) — penanda infestasi paling gampang dikenali, bukan
+# keong dewasa (belum ada dataset publik yang layak untuk itu).
+#
+# Ulat grayak TIDAK ada di sini — datanya belum cukup untuk training lokal
+# yang layak (lihat training/README.md), jadi untuk sementara tetap
+# dideteksi lewat Roboflow API (mode cloud di main.py).
 
 path: dataset      # relatif terhadap folder training/
 train: train/images
 val: valid/images
 test: test/images  # opsional, boleh tidak ada
 
-nc: 2
+nc: 3
 names:
   0: wereng_coklat   # wereng batang coklat / brown planthopper
   1: walang_sangit    # walang sangit / rice bug
+  2: keong_mas         # keong mas (telur) / golden apple snail eggs

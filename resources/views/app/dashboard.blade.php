@@ -234,6 +234,7 @@
                     <span id="badge-camera" class="status-badge" style="background: #eeeeee; color: #616161;">Kamera Offline</span>
                     <div id="camera-confidence" style="font-size: 11px; color: #999; margin-top: 5px;"></div>
                     <div id="camera-time" style="font-size: 11px; color: #aaa;"></div>
+                    <div id="camera-disease" style="font-size: 12px; color: #e65100; font-weight: 600; margin-top: 6px;"></div>
                     <span class="card-tap-hint">Tap untuk info</span>
                 </div>
                 <div class="card-back">
@@ -242,7 +243,8 @@
                         Kamera mendeteksi binatang via YOLOv8 AI secara real-time.<br>
                         🟢 <b>Kamera Aktif</b>: script Python berjalan<br>
                         ⚫ <b>Kamera Offline</b>: script tidak berjalan<br>
-                        🔴 <b>Binatang Terdeteksi</b>: buzzer 3 detik
+                        🔴 <b>Hama Terdeteksi</b>: buzzer 3 detik<br>
+                        🟠 <b>Penyakit Daun</b>: peringatan saja, buzzer tidak bunyi
                     </div>
                 </div>
             </div>
@@ -437,8 +439,8 @@ window.flipCard = function(wrapper) {
 
             const d = data.detection;
             if (d && d.detected) {
-                setText('val-camera-animal', 'Binatang Terdeteksi');
-                setText('camera-confidence', '');
+                setText('val-camera-animal', d.animal_label || 'Hama Terdeteksi');
+                setText('camera-confidence', d.confidence ? `Keyakinan ${Math.round(d.confidence * 100)}%` : '');
                 setText('camera-time', d.detected_human || '');
                 setBadge('badge-camera', '#ffebee', '#c62828', 'TERDETEKSI');
             } else if (data.camera_online) {
@@ -446,6 +448,11 @@ window.flipCard = function(wrapper) {
                 setText('camera-confidence', '');
                 setText('camera-time', d ? (d.detected_human || '') : '');
             }
+
+            const dz = data.disease;
+            setText('camera-disease', dz
+                ? `Penyakit daun: ${dz.disease_label} (${Math.round((dz.confidence || 0) * 100)}%) · ${dz.detected_human || ''}`
+                : '');
         } catch (_) {}
     }
 

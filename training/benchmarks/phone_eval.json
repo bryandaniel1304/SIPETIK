@@ -1,0 +1,100 @@
+{
+  "pest_v4 + yolov8n": {
+    "per_class": {
+      "belalang_padi": "0/206",
+      "keong_mas": "8/202",
+      "kepinding_hitam": "0/201",
+      "lalat_bibit": "3/102",
+      "penggerek_batang": "5/328",
+      "penggulung_daun": "4/336",
+      "tikus": "0/34",
+      "walang_sangit": "7/354",
+      "wereng_coklat": "2/213",
+      "wereng_hijau": "2/295"
+    },
+    "pest_hit": "31/2271",
+    "pest_rate": 0.0137,
+    "insect_as_person": 1,
+    "person_and_pest_frames": 554,
+    "person_and_pest_ok": 14,
+    "neg_false_alarm": "1/800",
+    "neg_by_class": {
+      "wereng_hijau": 1
+    },
+    "recording": {
+      "frames": 1740,
+      "frames_with_pest": 133,
+      "by_class": {
+        "wereng_coklat": 147,
+        "penggulung_daun": 8
+      }
+    }
+  },
+  "pest_v4 + yolo11s": {
+    "per_class": {
+      "belalang_padi": "0/206",
+      "keong_mas": "8/202",
+      "kepinding_hitam": "0/201",
+      "lalat_bibit": "3/102",
+      "penggerek_batang": "5/328",
+      "penggulung_daun": "4/336",
+      "tikus": "0/34",
+      "walang_sangit": "7/354",
+      "wereng_coklat": "2/213",
+      "wereng_hijau": "2/295"
+    },
+    "pest_hit": "31/2271",
+    "pest_rate": 0.0137,
+    "insect_as_person": 3,
+    "person_and_pest_frames": 642,
+    "person_and_pest_ok": 16,
+    "neg_false_alarm": "1/800",
+    "neg_by_class": {
+      "wereng_hijau": 1
+    },
+    "recording": {
+      "frames": 1740,
+      "frames_with_pest": 133,
+      "by_class": {
+        "wereng_coklat": 147,
+        "penggulung_daun": 8
+      }
+    }
+  },
+  "pest_v5 + yolov8n": {
+    "per_class": {
+      "belalang_padi": "4/206",
+      "keong_mas": "45/202",
+      "kepinding_hitam": "0/201",
+      "lalat_bibit": "28/102",
+      "penggerek_batang": "119/328",
+      "penggulung_daun": "75/336",
+      "tikus": "14/34",
+      "walang_sangit": "125/354",
+      "wereng_coklat": "15/213",
+      "wereng_hijau": "129/295"
+    },
+    "pest_hit": "554/2271",
+    "pest_rate": 0.2439,
+    "insect_as_person": 1,
+    "person_and_pest_frames": 554,
+    "person_and_pest_ok": 234,
+    "neg_false_alarm": "11/800",
+    "neg_by_class": {
+      "wereng_hijau": 3,
+      "walang_sangit": 1,
+      "penggerek_batang": 1,
+      "tikus": 3,
+      "wereng_coklat": 1,
+      "keong_mas": 1,
+      "penggulung_daun": 1
+    },
+    "recording": {
+      "frames": 1740,
+      "frames_with_pest": 24,
+      "by_class": {
+        "wereng_coklat": 30
+      }
+    }
+  }
+}

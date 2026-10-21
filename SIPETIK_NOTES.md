@@ -183,8 +183,11 @@ tail -f storage/logs/laravel.log
 | `config/esp32.php` | Kalibrasi soil raw, IP sensor |
 | `storage/app/buzzer_command.txt` | Antrian perintah buzzer ke ESP32 |
 | `esp32_sipetik_dashboard.ino` | Sketch Arduino ESP32 |
-| `main.py` | Script deteksi hama sawah (YOLOv8 + `best.pt`) |
+| `main.py` | Kamera AI: hama `pest_v4.pt` + tracking (`--confirm-frames 3`), penyakit daun `disease_v1.pt` (tanpa buzzer), opsi `--trt`, `--tiles 2`, `--source video.mp4` |
+| `pest_v4.pt` | Model hama v4 (YOLO11s): 9 serangga + tikus + keong mas, dilatih dengan gambar negatif — lihat `training/README.md` |
+| `pest_v3.pt` | Model hama v3 (YOLOv8n), cadangan kalau `pest_v4.pt` tidak ada |
+| `disease_v1.pt` | 6 penyakit daun padi → `POST /api/camera/disease`, peringatan oranye di dashboard |
 | `animal_detector.py` | Script deteksi binatang umum (fallback COCO / Roboflow tikus) |
 | `camera_requirements.txt` | Dependensi Python untuk deteksi |
 | `windows_git_fix.py` | Workaround bug `ultralytics` di komputer ini (folder `D:\WpSystem` rusak) — wajib di-import sebelum `ultralytics` |
-| `training/` | Pipeline untuk melatih ulang `best.pt` supaya deteksi lebih banyak hama — lihat [`training/README.md`](training/README.md) |
+| `training/` | Pipeline training (v1–v3), `benchmark_gpu.py`, `eval_false_positives.py` — lihat [`training/README.md`](training/README.md) |

@@ -1,0 +1,33 @@
+# SIPETIK local dataset v2. main.py does not load this file.
+# Ids 0-2 match training/data.yaml. Path is on G:, not D:\submit sipetik.
+# Splits are the original Roboflow train/valid/test splits.
+# Source class strings merged into each slug:
+#   0 wereng_coklat: "brown plant hopper", "brown-planthopper"
+#   1 walang_sangit: "rice bug", "rice-bug"
+#   2 keong_mas: "applesnail-eggs", "applesnail-eggs-reflections" (eggs, not adult snail)
+#   3 wereng_hijau: "green leaf hopper", "green-leafhopper"
+#   4 penggulung_daun: "rice leaf roller", "leaf-folder"
+#   5 penggerek_batang: "stem borer", "stem-borer"
+#   6 kepinding_hitam: "black bug"
+#   7 belalang_padi: "rice grasshopper"
+#   8 lalat_bibit: "whorl-maggot"
+# Later display names, only after a v2 weight exists:
+#   Wereng Batang Coklat, Walang Sangit, Keong Mas, Wereng Hijau, Penggulung Daun,
+#   Penggerek Batang, Kepinding Hitam, Belalang Padi, Lalat Bibit
+
+path: G:/Projects/sipetik/studiopengembangansistem/studiopengembangansistem/training/dataset_v2
+train: train/images
+val: valid/images
+test: test/images
+
+nc: 9
+names:
+  0: wereng_coklat
+  1: walang_sangit
+  2: keong_mas
+  3: wereng_hijau
+  4: penggulung_daun
+  5: penggerek_batang
+  6: kepinding_hitam
+  7: belalang_padi
+  8: lalat_bibit

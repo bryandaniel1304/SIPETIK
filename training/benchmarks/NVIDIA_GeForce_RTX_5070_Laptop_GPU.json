@@ -1,0 +1,60 @@
+{
+  "info": {
+    "gpu": "NVIDIA GeForce RTX 5070 Laptop GPU",
+    "vram_gb": 7.9,
+    "sm": "12.0",
+    "sm_count": 36,
+    "torch": "2.14.1+cu130",
+    "cuda": "13.0",
+    "cpu": "Intel64 Family 6 Model 189 Stepping 1, GenuineIntel",
+    "date": "2026-10-05T07:29:37"
+  },
+  "inference": {
+    "pytorch_fp32": {
+      "median_ms_per_model": {
+        "coco_person": 7.76,
+        "tikus_best": 7.26,
+        "hama_v2": 8.16,
+        "hama_v3": 8.43,
+        "hama_v4_11s": 12.76,
+        "penyakit": 8.92
+      },
+      "pipeline_old_ms": 23.18,
+      "pipeline_old_fps": 43.1,
+      "pipeline_new_ms": 16.19,
+      "pipeline_new_fps": 61.8,
+      "pipeline_v4_ms": 20.52,
+      "pipeline_v4_fps": 48.7
+    },
+    "tensorrt_fp16": {
+      "median_ms_per_model": {
+        "coco_person": 4.0,
+        "tikus_best": 3.27,
+        "hama_v2": 3.82,
+        "hama_v3": 3.7,
+        "hama_v4_11s": 3.52,
+        "penyakit": 3.2
+      },
+      "pipeline_old_ms": 11.09,
+      "pipeline_old_fps": 90.2,
+      "pipeline_new_ms": 7.7,
+      "pipeline_new_fps": 129.9,
+      "pipeline_v4_ms": 7.52,
+      "pipeline_v4_fps": 133.0
+    },
+    "gpu_raw_img_per_s_batch16": {
+      "float32": 320.4,
+      "float16": 504.7
+    }
+  },
+  "training": {
+    "images_per_epoch": 800,
+    "batch": 8,
+    "epochs": 3,
+    "sec_per_epoch_steady": 14.48,
+    "train_img_per_s": 55.2,
+    "amp_fp16_training": true,
+    "peak_vram_gb": 0.98,
+    "wall_s": 70.2
+  }
+}

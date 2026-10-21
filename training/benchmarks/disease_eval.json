@@ -1,0 +1,38 @@
+{
+  "model": "C:/Users/TRITON 14 AI/sipetik/runs/sipetik_disease_v1/weights/best.pt",
+  "conf": 0.5,
+  "test_map50": 0.4993,
+  "test_map50_95": 0.2476,
+  "test_per_class_map50": {
+    "blas_daun": 0.5335,
+    "hawar_daun_bakteri": 0.4645,
+    "bercak_coklat": 0.4572,
+    "bercak_coklat_sempit": 0.2974,
+    "hangus_daun": 0.7441
+  },
+  "false_coco": {
+    "images": 2700,
+    "warnings": 2,
+    "rate": 0.0007,
+    "by_class": {
+      "hawar_daun_bakteri": 2
+    }
+  },
+  "false_foto_hama": {
+    "images": 838,
+    "warnings": 38,
+    "rate": 0.0453,
+    "by_class": {
+      "hawar_daun_bakteri": 23,
+      "blas_daun": 12,
+      "hangus_daun": 2,
+      "bercak_coklat": 1
+    }
+  },
+  "video_demo": {
+    "seconds": 54.2,
+    "checks": 28,
+    "checks_with_warning": 0,
+    "by_class": {}
+  }
+}

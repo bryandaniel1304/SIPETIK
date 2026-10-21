@@ -1,0 +1,301 @@
+{
+  "video": "VIDEO DEMO SIPETIK.mp4",
+  "conf": 0.55,
+  "cooldown_s": 10,
+  "results": {
+    "lama (best.pt + pest_v2.pt)": {
+      "negative_video": {
+        "frames": 1625,
+        "frames_with_pest": 142,
+        "alarms": 4,
+        "by_class": {
+          "rat": 76,
+          "wereng_coklat": 62,
+          "wereng_hijau": 4
+        }
+      }
+    },
+    "v3 tanpa tracking": {
+      "negative_video": {
+        "frames": 1625,
+        "frames_with_pest": 1,
+        "alarms": 1,
+        "by_class": {
+          "wereng_coklat": 1
+        }
+      },
+      "positive_clips": {
+        "belalang_padi": {
+          "clips": 30,
+          "alarm": 30,
+          "median_frame_to_alarm": 1.0
+        },
+        "keong_mas": {
+          "clips": 30,
+          "alarm": 30,
+          "median_frame_to_alarm": 1.0
+        },
+        "lalat_bibit": {
+          "clips": 30,
+          "alarm": 30,
+          "median_frame_to_alarm": 1.0
+        },
+        "penggerek_batang": {
+          "clips": 30,
+          "alarm": 23,
+          "median_frame_to_alarm": 1.0
+        },
+        "penggulung_daun": {
+          "clips": 30,
+          "alarm": 30,
+          "median_frame_to_alarm": 1.0
+        },
+        "tikus": {
+          "clips": 25,
+          "alarm": 8,
+          "median_frame_to_alarm": 1.0
+        },
+        "walang_sangit": {
+          "clips": 30,
+          "alarm": 29,
+          "median_frame_to_alarm": 1.0
+        },
+        "wereng_coklat": {
+          "clips": 23,
+          "alarm": 16,
+          "median_frame_to_alarm": 1.0
+        },
+        "wereng_hijau": {
+          "clips": 30,
+          "alarm": 28,
+          "median_frame_to_alarm": 1.0
+        }
+      }
+    },
+    "v3 + tracking (3 frame)": {
+      "negative_video": {
+        "frames": 1625,
+        "frames_with_pest": 0,
+        "alarms": 0,
+        "by_class": {}
+      },
+      "positive_clips": {
+        "belalang_padi": {
+          "clips": 30,
+          "alarm": 30,
+          "median_frame_to_alarm": 3.0
+        },
+        "keong_mas": {
+          "clips": 30,
+          "alarm": 30,
+          "median_frame_to_alarm": 3.0
+        },
+        "lalat_bibit": {
+          "clips": 30,
+          "alarm": 29,
+          "median_frame_to_alarm": 3.0
+        },
+        "penggerek_batang": {
+          "clips": 30,
+          "alarm": 24,
+          "median_frame_to_alarm": 3.0
+        },
+        "penggulung_daun": {
+          "clips": 30,
+          "alarm": 30,
+          "median_frame_to_alarm": 3.0
+        },
+        "tikus": {
+          "clips": 25,
+          "alarm": 7,
+          "median_frame_to_alarm": 3.0
+        },
+        "walang_sangit": {
+          "clips": 30,
+          "alarm": 29,
+          "median_frame_to_alarm": 3.0
+        },
+        "wereng_coklat": {
+          "clips": 23,
+          "alarm": 16,
+          "median_frame_to_alarm": 3.0
+        },
+        "wereng_hijau": {
+          "clips": 30,
+          "alarm": 28,
+          "median_frame_to_alarm": 3.0
+        }
+      }
+    },
+    "v3 + tracking + tiling 2x2": {
+      "negative_video": {
+        "frames": 1625,
+        "frames_with_pest": 62,
+        "alarms": 2,
+        "by_class": {
+          "wereng_coklat": 64
+        }
+      },
+      "positive_clips": {
+        "belalang_padi": {
+          "clips": 30,
+          "alarm": 30,
+          "median_frame_to_alarm": 3.0
+        },
+        "keong_mas": {
+          "clips": 30,
+          "alarm": 30,
+          "median_frame_to_alarm": 3.0
+        },
+        "lalat_bibit": {
+          "clips": 30,
+          "alarm": 30,
+          "median_frame_to_alarm": 3.0
+        },
+        "penggerek_batang": {
+          "clips": 30,
+          "alarm": 30,
+          "median_frame_to_alarm": 3.0
+        },
+        "penggulung_daun": {
+          "clips": 30,
+          "alarm": 30,
+          "median_frame_to_alarm": 3.0
+        },
+        "tikus": {
+          "clips": 25,
+          "alarm": 14,
+          "median_frame_to_alarm": 3.0
+        },
+        "walang_sangit": {
+          "clips": 30,
+          "alarm": 29,
+          "median_frame_to_alarm": 3.0
+        },
+        "wereng_coklat": {
+          "clips": 23,
+          "alarm": 17,
+          "median_frame_to_alarm": 3.0
+        },
+        "wereng_hijau": {
+          "clips": 30,
+          "alarm": 29,
+          "median_frame_to_alarm": 3.0
+        }
+      }
+    },
+    "pest_v4 + tracking (3 frame)": {
+      "negative_video": {
+        "frames": 1625,
+        "frames_with_pest": 0,
+        "alarms": 0,
+        "by_class": {}
+      },
+      "positive_clips": {
+        "belalang_padi": {
+          "clips": 30,
+          "alarm": 30,
+          "median_frame_to_alarm": 3.0
+        },
+        "keong_mas": {
+          "clips": 30,
+          "alarm": 30,
+          "median_frame_to_alarm": 3.0
+        },
+        "lalat_bibit": {
+          "clips": 30,
+          "alarm": 30,
+          "median_frame_to_alarm": 3.0
+        },
+        "penggerek_batang": {
+          "clips": 30,
+          "alarm": 24,
+          "median_frame_to_alarm": 3.0
+        },
+        "penggulung_daun": {
+          "clips": 30,
+          "alarm": 30,
+          "median_frame_to_alarm": 3.0
+        },
+        "tikus": {
+          "clips": 25,
+          "alarm": 7,
+          "median_frame_to_alarm": 3.0
+        },
+        "walang_sangit": {
+          "clips": 30,
+          "alarm": 29,
+          "median_frame_to_alarm": 3.0
+        },
+        "wereng_coklat": {
+          "clips": 23,
+          "alarm": 16,
+          "median_frame_to_alarm": 3.0
+        },
+        "wereng_hijau": {
+          "clips": 30,
+          "alarm": 28,
+          "median_frame_to_alarm": 3.0
+        }
+      }
+    },
+    "pest_v4 + tracking + tiling 2x2": {
+      "negative_video": {
+        "frames": 1625,
+        "frames_with_pest": 27,
+        "alarms": 1,
+        "by_class": {
+          "wereng_coklat": 22,
+          "penggerek_batang": 8
+        }
+      },
+      "positive_clips": {
+        "belalang_padi": {
+          "clips": 30,
+          "alarm": 30,
+          "median_frame_to_alarm": 3.0
+        },
+        "keong_mas": {
+          "clips": 30,
+          "alarm": 30,
+          "median_frame_to_alarm": 3.0
+        },
+        "lalat_bibit": {
+          "clips": 30,
+          "alarm": 30,
+          "median_frame_to_alarm": 3.0
+        },
+        "penggerek_batang": {
+          "clips": 30,
+          "alarm": 30,
+          "median_frame_to_alarm": 3.0
+        },
+        "penggulung_daun": {
+          "clips": 30,
+          "alarm": 30,
+          "median_frame_to_alarm": 3.0
+        },
+        "tikus": {
+          "clips": 25,
+          "alarm": 17,
+          "median_frame_to_alarm": 3.0
+        },
+        "walang_sangit": {
+          "clips": 30,
+          "alarm": 29,
+          "median_frame_to_alarm": 3.0
+        },
+        "wereng_coklat": {
+          "clips": 23,
+          "alarm": 19,
+          "median_frame_to_alarm": 3.0
+        },
+        "wereng_hijau": {
+          "clips": 30,
+          "alarm": 29,
+          "median_frame_to_alarm": 3.0
+        }
+      }
+    }
+  }
+}

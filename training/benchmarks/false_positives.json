@@ -1,0 +1,474 @@
+{
+  "conf": 0.55,
+  "old": {
+    "models": [
+      "best.pt",
+      "pest_v2.pt"
+    ],
+    "tiles": 1,
+    "min_area": 0.01,
+    "negatives": {
+      "coco": {
+        "images": 2700,
+        "false_alarms": 359,
+        "false_alarm_rate": 0.133,
+        "by_class": {
+          "rat": 173,
+          "walang_sangit": 53,
+          "wereng_hijau": 44,
+          "keong_mas": 40,
+          "bird": 30,
+          "penggerek_batang": 24,
+          "wereng_coklat": 21,
+          "penggulung_daun": 11,
+          "lalat_bibit": 6
+        }
+      },
+      "rice_leaf": {
+        "images": 3988,
+        "false_alarms": 497,
+        "false_alarm_rate": 0.1246,
+        "by_class": {
+          "wereng_hijau": 164,
+          "wereng_coklat": 108,
+          "penggulung_daun": 100,
+          "penggerek_batang": 52,
+          "lalat_bibit": 36,
+          "walang_sangit": 28,
+          "rat": 17,
+          "bird": 3
+        }
+      }
+    },
+    "positives": {
+      "belalang_padi": {
+        "hit": 143,
+        "total": 143,
+        "rate": 1.0
+      },
+      "keong_mas": {
+        "hit": 64,
+        "total": 165,
+        "rate": 0.3879
+      },
+      "kepinding_hitam": {
+        "hit": 0,
+        "total": 143,
+        "rate": 0.0
+      },
+      "lalat_bibit": {
+        "hit": 45,
+        "total": 67,
+        "rate": 0.6716
+      },
+      "penggerek_batang": {
+        "hit": 89,
+        "total": 232,
+        "rate": 0.3836
+      },
+      "penggulung_daun": {
+        "hit": 96,
+        "total": 234,
+        "rate": 0.4103
+      },
+      "tikus": {
+        "hit": 5,
+        "total": 25,
+        "rate": 0.2
+      },
+      "walang_sangit": {
+        "hit": 227,
+        "total": 245,
+        "rate": 0.9265
+      },
+      "wereng_coklat": {
+        "hit": 15,
+        "total": 157,
+        "rate": 0.0955
+      },
+      "wereng_hijau": {
+        "hit": 104,
+        "total": 241,
+        "rate": 0.4315
+      }
+    }
+  },
+  "pest_v3": {
+    "models": [
+      "pest_v3.pt"
+    ],
+    "tiles": 1,
+    "min_area": 0.01,
+    "negatives": {
+      "coco": {
+        "images": 2700,
+        "false_alarms": 39,
+        "false_alarm_rate": 0.0144,
+        "by_class": {
+          "bird": 30,
+          "keong_mas": 7,
+          "walang_sangit": 2,
+          "penggulung_daun": 1,
+          "lalat_bibit": 1
+        }
+      },
+      "panicle": {
+        "images": 1428,
+        "false_alarms": 0,
+        "false_alarm_rate": 0.0,
+        "by_class": {}
+      },
+      "rice_leaf": {
+        "images": 3988,
+        "false_alarms": 47,
+        "false_alarm_rate": 0.0118,
+        "by_class": {
+          "penggulung_daun": 15,
+          "wereng_coklat": 9,
+          "lalat_bibit": 8,
+          "wereng_hijau": 6,
+          "penggerek_batang": 4,
+          "bird": 3,
+          "walang_sangit": 2
+        }
+      }
+    },
+    "positives": {
+      "belalang_padi": {
+        "hit": 143,
+        "total": 143,
+        "rate": 1.0
+      },
+      "keong_mas": {
+        "hit": 89,
+        "total": 165,
+        "rate": 0.5394
+      },
+      "kepinding_hitam": {
+        "hit": 0,
+        "total": 143,
+        "rate": 0.0
+      },
+      "lalat_bibit": {
+        "hit": 45,
+        "total": 67,
+        "rate": 0.6716
+      },
+      "penggerek_batang": {
+        "hit": 88,
+        "total": 232,
+        "rate": 0.3793
+      },
+      "penggulung_daun": {
+        "hit": 95,
+        "total": 234,
+        "rate": 0.406
+      },
+      "tikus": {
+        "hit": 7,
+        "total": 25,
+        "rate": 0.28
+      },
+      "walang_sangit": {
+        "hit": 227,
+        "total": 245,
+        "rate": 0.9265
+      },
+      "wereng_coklat": {
+        "hit": 15,
+        "total": 157,
+        "rate": 0.0955
+      },
+      "wereng_hijau": {
+        "hit": 103,
+        "total": 241,
+        "rate": 0.4274
+      }
+    }
+  },
+  "pest_v3_tiles2": {
+    "models": [
+      "pest_v3.pt"
+    ],
+    "tiles": 2,
+    "min_area": 0.002,
+    "negatives": {
+      "coco": {
+        "images": 2700,
+        "false_alarms": 140,
+        "false_alarm_rate": 0.0519,
+        "by_class": {
+          "tikus": 30,
+          "bird": 30,
+          "wereng_hijau": 24,
+          "keong_mas": 19,
+          "walang_sangit": 19,
+          "wereng_coklat": 13,
+          "penggerek_batang": 6,
+          "penggulung_daun": 4,
+          "lalat_bibit": 3,
+          "belalang_padi": 1
+        }
+      },
+      "panicle": {
+        "images": 1428,
+        "false_alarms": 1,
+        "false_alarm_rate": 0.0007,
+        "by_class": {
+          "tikus": 1
+        }
+      },
+      "rice_leaf": {
+        "images": 3988,
+        "false_alarms": 346,
+        "false_alarm_rate": 0.0868,
+        "by_class": {
+          "wereng_coklat": 82,
+          "penggerek_batang": 78,
+          "wereng_hijau": 77,
+          "penggulung_daun": 70,
+          "lalat_bibit": 31,
+          "walang_sangit": 29,
+          "bird": 3,
+          "tikus": 2
+        }
+      }
+    },
+    "positives": {
+      "belalang_padi": {
+        "hit": 143,
+        "total": 143,
+        "rate": 1.0
+      },
+      "keong_mas": {
+        "hit": 109,
+        "total": 165,
+        "rate": 0.6606
+      },
+      "kepinding_hitam": {
+        "hit": 143,
+        "total": 143,
+        "rate": 1.0
+      },
+      "lalat_bibit": {
+        "hit": 64,
+        "total": 67,
+        "rate": 0.9552
+      },
+      "penggerek_batang": {
+        "hit": 232,
+        "total": 232,
+        "rate": 1.0
+      },
+      "penggulung_daun": {
+        "hit": 229,
+        "total": 234,
+        "rate": 0.9786
+      },
+      "tikus": {
+        "hit": 16,
+        "total": 25,
+        "rate": 0.64
+      },
+      "walang_sangit": {
+        "hit": 239,
+        "total": 245,
+        "rate": 0.9755
+      },
+      "wereng_coklat": {
+        "hit": 153,
+        "total": 157,
+        "rate": 0.9745
+      },
+      "wereng_hijau": {
+        "hit": 107,
+        "total": 241,
+        "rate": 0.444
+      }
+    }
+  },
+  "pest_v4": {
+    "models": [
+      "pest_v4.pt"
+    ],
+    "tiles": 1,
+    "min_area": 0.01,
+    "negatives": {
+      "coco": {
+        "images": 2700,
+        "false_alarms": 30,
+        "false_alarm_rate": 0.0111,
+        "by_class": {
+          "bird": 30
+        }
+      },
+      "panicle": {
+        "images": 1428,
+        "false_alarms": 0,
+        "false_alarm_rate": 0.0,
+        "by_class": {}
+      },
+      "rice_leaf": {
+        "images": 3988,
+        "false_alarms": 10,
+        "false_alarm_rate": 0.0025,
+        "by_class": {
+          "wereng_coklat": 4,
+          "bird": 3,
+          "penggerek_batang": 1,
+          "penggulung_daun": 1,
+          "walang_sangit": 1
+        }
+      }
+    },
+    "positives": {
+      "belalang_padi": {
+        "hit": 143,
+        "total": 143,
+        "rate": 1.0
+      },
+      "keong_mas": {
+        "hit": 88,
+        "total": 165,
+        "rate": 0.5333
+      },
+      "kepinding_hitam": {
+        "hit": 0,
+        "total": 143,
+        "rate": 0.0
+      },
+      "lalat_bibit": {
+        "hit": 44,
+        "total": 67,
+        "rate": 0.6567
+      },
+      "penggerek_batang": {
+        "hit": 89,
+        "total": 232,
+        "rate": 0.3836
+      },
+      "penggulung_daun": {
+        "hit": 94,
+        "total": 234,
+        "rate": 0.4017
+      },
+      "tikus": {
+        "hit": 6,
+        "total": 25,
+        "rate": 0.24
+      },
+      "walang_sangit": {
+        "hit": 229,
+        "total": 245,
+        "rate": 0.9347
+      },
+      "wereng_coklat": {
+        "hit": 17,
+        "total": 157,
+        "rate": 0.1083
+      },
+      "wereng_hijau": {
+        "hit": 104,
+        "total": 241,
+        "rate": 0.4315
+      }
+    }
+  },
+  "pest_v4_tiles2": {
+    "models": [
+      "pest_v4.pt"
+    ],
+    "tiles": 2,
+    "min_area": 0.002,
+    "negatives": {
+      "coco": {
+        "images": 2700,
+        "false_alarms": 98,
+        "false_alarm_rate": 0.0363,
+        "by_class": {
+          "bird": 30,
+          "tikus": 24,
+          "walang_sangit": 15,
+          "keong_mas": 10,
+          "wereng_hijau": 9,
+          "penggerek_batang": 5,
+          "wereng_coklat": 5,
+          "kepinding_hitam": 2,
+          "lalat_bibit": 2
+        }
+      },
+      "panicle": {
+        "images": 1428,
+        "false_alarms": 0,
+        "false_alarm_rate": 0.0,
+        "by_class": {}
+      },
+      "rice_leaf": {
+        "images": 3988,
+        "false_alarms": 252,
+        "false_alarm_rate": 0.0632,
+        "by_class": {
+          "wereng_hijau": 65,
+          "penggerek_batang": 53,
+          "penggulung_daun": 48,
+          "wereng_coklat": 45,
+          "walang_sangit": 31,
+          "lalat_bibit": 23,
+          "bird": 3
+        }
+      }
+    },
+    "positives": {
+      "belalang_padi": {
+        "hit": 143,
+        "total": 143,
+        "rate": 1.0
+      },
+      "keong_mas": {
+        "hit": 108,
+        "total": 165,
+        "rate": 0.6545
+      },
+      "kepinding_hitam": {
+        "hit": 143,
+        "total": 143,
+        "rate": 1.0
+      },
+      "lalat_bibit": {
+        "hit": 64,
+        "total": 67,
+        "rate": 0.9552
+      },
+      "penggerek_batang": {
+        "hit": 232,
+        "total": 232,
+        "rate": 1.0
+      },
+      "penggulung_daun": {
+        "hit": 229,
+        "total": 234,
+        "rate": 0.9786
+      },
+      "tikus": {
+        "hit": 18,
+        "total": 25,
+        "rate": 0.72
+      },
+      "walang_sangit": {
+        "hit": 241,
+        "total": 245,
+        "rate": 0.9837
+      },
+      "wereng_coklat": {
+        "hit": 153,
+        "total": 157,
+        "rate": 0.9745
+      },
+      "wereng_hijau": {
+        "hit": 107,
+        "total": 241,
+        "rate": 0.444
+      }
+    }
+  }
+}
