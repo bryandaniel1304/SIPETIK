@@ -26,7 +26,7 @@ SIPETIK adalah sistem monitoring sawah cerdas yang memadukan teknologi **IoT (ES
 ### Fitur Utama
 | Fitur | Keterangan |
 |---|---|
-| Monitoring Sensor | Suhu, kelembapan udara, kelembapan tanah, pH, gerakan PIR |
+| Monitoring Sensor | Suhu, kelembapan udara, kelembapan tanah, pH |
 | Deteksi Hama AI | Kamera mendeteksi binatang dan hama secara real-time |
 | Buzzer Otomatis | ESP32 berbunyi saat hama atau binatang terdeteksi |
 | Notifikasi Email | Email dikirim otomatis saat risiko hama tinggi |
@@ -52,7 +52,6 @@ SIPETIK adalah sistem monitoring sawah cerdas yang memadukan teknologi **IoT (ES
 | Sensor Suhu/Kelembapan | DHT22 |
 | Sensor Kelembapan Tanah | Kapasitif (pin 34) |
 | Sensor pH | Analog pH Module (pin 35) |
-| Sensor Gerak | PIR Sensor |
 | Buzzer | Active Buzzer (pin 25) |
 | LCD | LCD 20x4 I2C (alamat 0x27) |
 | Kamera | Webcam (bawaan laptop atau eksternal) |
@@ -142,7 +141,6 @@ Dasbor adalah halaman utama yang menampilkan kondisi sawah secara real-time.
 | Kelembapan Udara | Kadar uap air udara (%) |
 | Risiko Hama | Tingkat risiko hama keseluruhan |
 | pH Tanah | Keasaman tanah (0–14) |
-| Deteksi Gerakan (PIR) | Status sensor gerak inframerah |
 | Soil Raw ADC | Nilai mentah ADC sensor tanah |
 | Deteksi Kamera AI | Status deteksi kamera real-time |
 
@@ -186,7 +184,6 @@ Klik menu **Data Sensor** di sidebar kiri.
 | Tanah (%) | Kelembapan tanah saat itu |
 | Udara (%) | Kelembapan udara saat itu |
 | pH | Nilai pH tanah |
-| Gerakan | Status PIR (AMAN / TERDETEKSI) |
 | Status Hama | Rendah / Sedang / Tinggi |
 | ID | Nomor urut data |
 
@@ -219,7 +216,7 @@ Klik menu **Peringatan Hama** di sidebar kiri.
 |---|---|
 | **Aman (Rendah)** | Semua kondisi sensor normal |
 | **Waspada (Sedang)** | Ada kondisi sensor di luar normal |
-| **Risiko Tinggi** | Kamera + PIR aktif bersamaan, atau kondisi lingkungan sangat buruk |
+| **Risiko Tinggi** | Kamera AI mendeteksi hama, atau kondisi lingkungan sangat buruk |
 
 ---
 

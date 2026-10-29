@@ -2,8 +2,20 @@
 
 **An IoT + computer-vision early-warning system that watches Indonesian rice fields for pests and leaf diseases and alerts farmers before damage spreads.**
 
-> Submitted to **FunDev International Competition 2026** — category *Digital Creative Technology*.
+> Submitted to **FunDev International Competition 2026** — category *IoT & Web Development Integration*.
 > Status: working prototype (field-tested 5 October 2026).
+
+**Demo video:** [Watch the SIPETIK demo on Google Drive](https://drive.google.com/file/d/1ulA16YgioG7i786sbkmGSMdNWvCeNKQt/view?usp=sharing)
+
+## Screenshots
+
+| Live dashboard | AI analysis & recommendations |
+|---|---|
+| ![Dashboard](docs/screenshots/dashboard.png) | ![AI analysis](docs/screenshots/ai_analysis.png) |
+| **Pest alerts (Peringatan Hama)** | **Settings: buzzer mode & schedule** |
+| ![Pest alerts](docs/screenshots/pest_alerts.png) | ![Settings](docs/screenshots/settings.png) |
+| **AI camera detection** | **Solar-powered field node** |
+| ![AI camera](docs/screenshots/ai_camera_detection.png) | ![Field node](docs/screenshots/field_node.jpg) |
 
 ---
 
@@ -113,8 +125,6 @@ Cloud (optional, Roboflow): *ulat grayak* (armyworm) and *keong mas*.
 | 20x4 I2C LCD (0x27) | Local readout | SDA/SCL |
 | USB webcam + laptop | AI camera | — |
 
-The manual also lists a PIR motion sensor. The current firmware does not read one (it sends `motion: false`); motion/pest events come from the AI camera.
-
 ## 8. Setup
 
 ### 8.1 Laravel dashboard
@@ -194,6 +204,8 @@ camera_requirements.txt    Python dependencies for the camera
 esp32_sipetik_dashboard.ino ESP32 firmware
 MANUAL_BOOK.md             user manual (Indonesian)
 *.pt                       model weights (pest_v4, pest_v3, pest_v2, best, disease_v1, yolov8n)
+docs/screenshots/          dashboard and camera screenshots
+archive/                   older presentation material and unused weights
 ```
 
 ## 12. Team — Universitas Pelita Harapan
@@ -206,4 +218,4 @@ MANUAL_BOOK.md             user manual (Indonesian)
 
 ## 13. License
 
-MIT (as declared in `composer.json`).
+MIT — see [LICENSE](LICENSE).
