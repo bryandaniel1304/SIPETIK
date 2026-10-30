@@ -5,7 +5,7 @@
 > Submitted to **FunDev International Competition 2026** — category *IoT & Web Development Integration*.
 > Status: working prototype (field-tested 5 October 2026).
 
-**Demo video:** [Watch the SIPETIK demo on Google Drive](https://drive.google.com/file/d/1lS4lYGVqsa08WzkBT2Kq8hAOb2abQZfz/view?usp=sharing)
+**Demo video:** [Watch the SIPETIK demo on Google Drive](https://drive.google.com/file/d/1TMtLovYgLjcdAHoGpj5vdCBZbZoz2qCk/view?usp=sharing)
 
 ## Screenshots
 
