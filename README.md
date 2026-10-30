@@ -212,7 +212,7 @@ archive/                   older presentation material and unused weights
 
 | Name | Role / Program |
 |---|---|
-| Bryan Daniel Angelino | Team Lead — Information Systems; NVIDIA Student Ambassador |
+| Bryan Daniel Angelino | Team Lead — Information Systems |
 | Alyssa Christiana Lin | Information Systems |
 | Filbert Audric | Information Systems |
 
