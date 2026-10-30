@@ -168,7 +168,7 @@ The `training/` folder contains the full pipeline:
 - `eval_disease.py`, `eval_false_positives.py`, `eval_phone.py`, `eval_video.py`, `test_image.py` — evaluation tools.
 - `training/README.md` — dataset history, including the domain-gap fix (early data was dead insects on sticky traps; natural field photos were added).
 
-**Recorded result — `pest_v2` (9 classes, YOLOv8n, 100 epochs, RTX 5070):** mAP50 **0.983**, mAP50-95 **0.676** on the validation set.
+**Recorded result — `pest_v2` (first 9-class model, YOLOv8n, 9,921 training images, 100 epochs, RTX 5070):** mAP50 **0.981** at epoch 100 (peak 0.983), mAP50-95 **0.676** on the validation set.
 Training logs for `pest_v4` and `disease_v1` are not included in this repo, so no metrics are claimed for them here; see the field test below.
 
 ## 10. Field test (5 October 2026)
